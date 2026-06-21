@@ -1,17 +1,41 @@
 package org.example;
 
-//TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
-// click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
-public class Main {
-    static void main() {
-        //TIP Press <shortcut actionId="ShowIntentionActions"/> with your caret at the highlighted text
-        // to see how IntelliJ IDEA suggests fixing it.
-        IO.println(String.format("Hello and welcome!"));
+import database.DatabaseConnection;
+import io.github.cdimascio.dotenv.Dotenv;
+import java.sql.Connection;
+import java.sql.SQLException;
 
-        for (int i = 1; i <= 5; i++) {
-            //TIP Press <shortcut actionId="Debug"/> to start debugging your code. We have set one <icon src="AllIcons.Debugger.Db_set_breakpoint"/> breakpoint
-            // for you, but you can always add more by pressing <shortcut actionId="ToggleLineBreakpoint"/>.
-            IO.println("i = " + i);
+public class Main {
+    public static void main(String[] args) {
+        System.out.println("=== INICIANDO PRUEBA DE CONFIGURACIÓN ===");
+
+        // 1. Diagnóstico: Verificar si Dotenv lee el archivo
+        try {
+            Dotenv dotenv = Dotenv.load();
+            System.out.println("-> Archivo .env cargado correctamente.");
+            System.out.println("-> URL detectada: " + dotenv.get("DB_URL"));
+            System.out.println("-> Usuario detectado: " + dotenv.get("DB_USER"));
+        } catch (Exception e) {
+            System.err.println("❌ Error: No se pudo encontrar o leer el archivo .env en la raíz del proyecto.");
+            return;
+        }
+
+        System.out.println("\n=== INTENTANDO CONEXIÓN A MYSQL ===");
+
+        // 2. Diagnóstico: Intentar conectar usando las credenciales del .env
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            if (conn != null && !conn.isClosed()) {
+                System.out.println("=================================================");
+                System.out.println("¡ÉXITO: Conexión establecida usando tu archivo .env!");
+                System.out.println("=================================================");
+            }
+        } catch (SQLException e) {
+            System.err.println("❌ Error crítico al conectar a la base de datos:");
+            System.err.println("Mensaje de MySQL: " + e.getMessage());
+            System.err.println("\nVerifica que:");
+            System.err.println("1. El servidor de MySQL esté encendido.");
+            System.err.println("2. Las credenciales en tu .env no tengan espacios o comillas de más.");
+            e.printStackTrace();
         }
     }
 }

@@ -13,6 +13,8 @@ target/
 *.iml
 *.ipr
 
+###Variables de Entorono
+.env
 ### Eclipse ###
 .apt_generated
 .classpath
