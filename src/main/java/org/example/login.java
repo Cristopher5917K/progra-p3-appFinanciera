@@ -3,12 +3,19 @@ package org.example;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.*;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
+
+import javax.swing.*;
 
 @Route("login")
 public class login extends VerticalLayout {
+
+    private VerticalLayout areaContenido;
 
     public login(){
         this.setSizeFull(); // Ocupa toda la pantalla
@@ -32,10 +39,11 @@ public class login extends VerticalLayout {
 
         // --- 3. LOGO (El cerebro verde) ---
         // Asumiendo que tienes la imagen en 'src/main/resources/META-INF/resources/images/logo.png'
-        Image logo = new Image("images/logo.png", "Logo");
-        logo.setWidth("80px"); // Tamaño del logo
-        logo.setHeight("80px");
+        Image logo = new Image("logo.png", "Logo");
+        logo.setWidth("220px"); // Tamaño del logo
+        logo.setHeight("150px");
         logo.getStyle().set("margin-bottom", "20px"); // Espacio abajo del logo
+
 
         // --- 4. TÍTULOS (En color blanco) ---
         H1 titulo = new H1("Smart Savings");
@@ -83,6 +91,13 @@ public class login extends VerticalLayout {
 
         this.add(seccionSuperior, lbllogin, lblunderlogin, lblmail, txtflogin, lblpassword, txtfpassword, btlogin, btsigin, lbltambien, btadmin_panel);
 
+        btsigin.addClickListener(event -> {
+            getUI().ifPresent(ui -> ui.navigate("register"));
+        });
+
+        btadmin_panel.addClickListener(event -> {
+            getUI().ifPresent(ui -> ui.navigate(""));
+        });
     }
 
 }
