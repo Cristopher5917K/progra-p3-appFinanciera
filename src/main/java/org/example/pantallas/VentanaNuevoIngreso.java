@@ -22,8 +22,8 @@ public class VentanaNuevoIngreso extends VerticalLayout {
     private final List<HorizontalLayout> timeSpam = new ArrayList<>();
 
     public VentanaNuevoIngreso(){
+        setSizeUndefined();
         setWidthFull();
-        setHeightFull();
         setWidth("390px");
         getStyle().set("margin", "0 auto");
         getStyle().set("padding-bottom", "68px");
@@ -63,7 +63,7 @@ public class VentanaNuevoIngreso extends VerticalLayout {
 
         HorizontalLayout iconContainer = new HorizontalLayout();
         iconContainer.setWidth("40px");
-        iconContainer.setHeight("40ps");
+        iconContainer.setHeight("40px");
         iconContainer.getStyle().set("border", "1px solid #D1D5DB");
         iconContainer.getStyle().set("border-radius", "30%");
         iconContainer.setAlignItems(Alignment.CENTER);
@@ -71,8 +71,8 @@ public class VentanaNuevoIngreso extends VerticalLayout {
 
         Icon backButton = VaadinIcon.ANGLE_LEFT.create();
         backButton.setColor("#000000");
-        backButton.getStyle().set("cursos", "pointer");
-        backButton.addClickListener(e -> UI.getCurrent().navigate("dashboard"));
+        backButton.getStyle().set("cursor", "pointer");
+        iconContainer.addClickListener(e -> UI.getCurrent().navigate("dashboard"));
 
         iconContainer.add(backButton);
 
@@ -120,7 +120,10 @@ public class VentanaNuevoIngreso extends VerticalLayout {
 
         Icon money = VaadinIcon.DOLLAR.create();
         money.setColor("#28a745");
-        money.setSize("24px");
+        money.setSize("22px");
+        money.getElement().getStyle().set("width", "22px");
+        money.getElement().getStyle().set("height", "22px");
+        money.getElement().getStyle().set("flex-shrink", "0");
 
         iconContainer.add(money);
 
@@ -212,12 +215,13 @@ public class VentanaNuevoIngreso extends VerticalLayout {
         container.getStyle().set("border-radius", "16px");
 
         Icon check = VaadinIcon.CHECK.create();
+        check.setSize("22px");
         check.setColor("#FFFFFF");
         check.setSize("16px");
 
         Span message = new Span("GUARDAR INGRESO");
         message.getStyle().set("color", "#FFFFFF");
-        message.getStyle().set("font-size", "1.2rem");
+        message.getStyle().set("font-size", "0.9rem");
         message.getStyle().set("font-weight", "bold");
 
         container.addClickListener(e -> UI.getCurrent().navigate("dashboard"));
@@ -284,6 +288,8 @@ public class VentanaNuevoIngreso extends VerticalLayout {
         fecha.getStyle().set("--lumo-base-color", "white");
         fecha.getStyle().set("--lumo-contrast-10pct", "white");
         fecha.getStyle().set("border-radius", "16px");
+        fecha.getStyle().set("border", "1px solid #D1D5DB");
+        fecha.getStyle().set("box-shadow", "0 4px 6px rgba(0, 0, 0, 0.05)");
 
         contenedor.add(label, fecha);
         return contenedor;

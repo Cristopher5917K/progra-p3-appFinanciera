@@ -20,12 +20,13 @@ import java.time.format.DateTimeFormatter;
 @Route("dashboard")
 public class Dashboard extends VerticalLayout {
     public Dashboard(){
+        setSizeUndefined();
         setWidthFull();
         setWidth("390px");
         getStyle().set("background-color", "#F8F9FA");
         getStyle().set("margin", "0 auto");
         getStyle().set("padding-bottom", "60px");
-        setHeightFull();
+        //setHeight("100vh");
         setPadding(false);
         setSpacing(false);
 
@@ -50,7 +51,7 @@ public class Dashboard extends VerticalLayout {
     private Component headerUser(){
         LocalDate time = LocalDate.now();
         DateTimeFormatter date = DateTimeFormatter.ofPattern("dd-MMMM-yyyy");
-        String formato = time.format(date);
+        String formato = time.format(date).toUpperCase();
 
         VerticalLayout headerInfo = new VerticalLayout();
         headerInfo.setWidthFull();
@@ -71,8 +72,8 @@ public class Dashboard extends VerticalLayout {
     }
 
     private Component generateScroll(){
-        VerticalLayout savings = dynamicCard("MONTO AHORRO", "$24850","#28a745" ,VaadinIcon.WALLET);
-        VerticalLayout graphic = dynamicCard("GRAFICO AHORRO", "VER MOVIMIENTOS", "#2D68C4",VaadinIcon.PIE_CHART);
+        VerticalLayout savings = dynamicCard("MONTO AHORRO", "$24850","#4ade80" ,VaadinIcon.WALLET);
+        VerticalLayout graphic = dynamicCard("GRAFICO AHORRO", "VER MOVIMIENTOS", "#60a5fa",VaadinIcon.PIE_CHART);
 
         HorizontalLayout container = new HorizontalLayout(savings, graphic);
         container.setPadding(false);
@@ -82,7 +83,7 @@ public class Dashboard extends VerticalLayout {
         carousel.setScrollDirection(Scroller.ScrollDirection.HORIZONTAL);
         carousel.setWidthFull();
 
-        carousel.setHeight("150px");
+        carousel.setHeight("160px");
 
         return carousel;
     }
@@ -93,8 +94,8 @@ public class Dashboard extends VerticalLayout {
         template.setPadding(true);
         template.setSpacing(true);
 
-        template.getStyle().set("background-color", "#FFFFFF");
-        template.getStyle().set("color", "#000000");
+        template.getStyle().set("background-color", "var(--lumo-base-color)");
+        template.getStyle().set("color", "var(--lumo-body-text-color)");
         template.getStyle().set("border-radius", "14px");
         template.getStyle().set("border", "1px solid #D1D5DB");
         template.getStyle().set("box-shadow", "0 4px 6px rgba(0, 0, 0, 0.1)");
@@ -111,7 +112,10 @@ public class Dashboard extends VerticalLayout {
 
         Icon icon = icono.create();
         icon.setColor(colorCode);
-        icon.setSize("50px");
+        icon.setSize("30px");
+        icon.getElement().getStyle().set("width", "30px");
+        icon.getElement().getStyle().set("height", "30px");
+        icon.getElement().getStyle().set("flex-shrink", "0");
 
         Span text = new Span(message);
         text.getStyle().set("font-size", "1.0rem");
@@ -134,6 +138,7 @@ public class Dashboard extends VerticalLayout {
         header.setAlignItems(Alignment.BASELINE);
 
         H4 info = new H4("CAPACIDAD DE AHORRO");
+        info.getStyle().set("font-zise", "0.9rem");
 
         int percentage = (int)((savings / goal) * 100);
         if (percentage > 100){
@@ -147,6 +152,8 @@ public class Dashboard extends VerticalLayout {
         header.add(info, infoPercentage);
 
         Span timeText = new Span("Este mes");
+        timeText.getStyle().set("font-size", "0.85rem");
+        timeText.getStyle().set("color", "#898989");
 
         HorizontalLayout progressBar = new HorizontalLayout();
         progressBar.setWidthFull();
@@ -213,41 +220,41 @@ public class Dashboard extends VerticalLayout {
         double valid = income * 0.10;
         if (utility > valid){
             Span text = new Span("Mantener este ahorro te ayudará a cubrir el costo de tu examen Cisco CCST muy pronto");
-            text.getStyle().set("font-size", "0.7rem");
+            text.getStyle().set("font-size", "0.8rem");
             text.getStyle().set("color", "#898989");
             Span text2 = new Span("Mantener tus hábitos te permitirá comprar una nueva laptop");
-            text2.getStyle().set("font-size", "0.7rem");
+            text2.getStyle().set("font-size", "0.8rem");
             text2.getStyle().set("color", "#898989");
             Span text3  = new Span("Mantener tus hábitos te van a permitir viajar al mundial");
-            text3.getStyle().set("font-size", "0.7rem");
+            text3.getStyle().set("font-size", "0.8rem");
             text3.getStyle().set("color", "#898989");
 
             recommendations.add(title, text, text2, text3);
         } else if (utility == valid){
             Span text = new Span("Diversificar ahorros para construir un historial financiero sólido.");
-            text.getStyle().set("font-size", "0.7rem");
+            text.getStyle().set("font-size", "0.8rem");
             text.getStyle().set("color", "#898989");
 
             Span text2 = new Span("Intentar evitar comer afuera");
-            text2.getStyle().set("font-size", "0.7rem");
+            text2.getStyle().set("font-size", "0.8rem");
             text2.getStyle().set("color", "#898989");
 
             Span text3  = new Span("Usar medios como bicicletas para transportarse");
-            text3.getStyle().set("font-size", "0.7rem");
+            text3.getStyle().set("font-size", "0.8rem");
             text3.getStyle().set("color", "#898989");
 
             recommendations.add(title, text, text2, text3);
         } else {
             Span text = new Span("Tus gastos diarios han superado el límite recomendado esta semana. ¡Ajusta tu presupuesto!");
-            text.getStyle().set("font-size", "0.7rem");
+            text.getStyle().set("font-size", "0.8rem");
             text.getStyle().set("color", "#898989");
 
             Span text2 = new Span("Guardar un 40% de sus ingresos para salir de la situación actual");
-            text2.getStyle().set("font-size", "0.7rem");
+            text2.getStyle().set("font-size", "0.8rem");
             text2.getStyle().set("color", "#898989");
 
             Span text3  = new Span("Conseguir otro trabajo para cubrir los gastos");
-            text3.getStyle().set("font-size", "0.7rem");
+            text3.getStyle().set("font-size", "0.8rem");
             text3.getStyle().set("color", "#898989");
 
             recommendations.add(title, text, text2, text3);
@@ -258,7 +265,7 @@ public class Dashboard extends VerticalLayout {
 
     private Component navigationBar(){
         HorizontalLayout icons = new HorizontalLayout();
-        icons.setHeight("55px");
+        icons.setHeight("60px");
         icons.getStyle().set("position", "fixed");
         icons.getStyle().set("bottom", "0");
         icons.getStyle().set("left", "50%");
@@ -266,8 +273,8 @@ public class Dashboard extends VerticalLayout {
         icons.getStyle().set("width", "100%");
         icons.getStyle().set("max-width", "390px");
 
-        icons.getStyle().set("background-color", "#FFFFFF ");
-        icons.getStyle().set("box-shadow", "0 -4px 10px rgba(0,0,0,0.05)");
+        icons.getStyle().set("background-color", "var(--lumo-base-color)");
+        icons.getStyle().set("border-top", "1px solid var(--lumo-contrast-10pct)");
         icons.getStyle().set("z-index", "100");
 
         icons.setJustifyContentMode(JustifyContentMode.EVENLY);
@@ -315,9 +322,11 @@ public class Dashboard extends VerticalLayout {
     private VerticalLayout crearTarjetaMini(String titulo, String monto, VaadinIcon icono, boolean esIngreso) {
         VerticalLayout card = cardTemplate();
         card.setWidth("50%");
-        card.setHeight("110px");
+        card.setHeight("100px");
         card.setJustifyContentMode(JustifyContentMode.CENTER);
         card.setAlignItems(Alignment.CENTER);
+        card.setSpacing(false);
+        card.getStyle().set("gap", "4px");
         card.getStyle().set("cursor", "pointer");
 
         HorizontalLayout container = new HorizontalLayout();
@@ -340,7 +349,10 @@ public class Dashboard extends VerticalLayout {
             card.getStyle().set("background-color", "#FFC5D3");
             icon.setColor("#ED2100");
         }
-        icon.setSize("24px");
+        icon.setSize("20px");
+        icon.getElement().getStyle().set("width", "20px");
+        icon.getElement().getStyle().set("height", "20px");
+        icon.getElement().getStyle().set("flex-shrink", "0");
 
         container.add(icon);
 
