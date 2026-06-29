@@ -13,13 +13,28 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import com.vaadin.flow.component.dialog.Dialog;
+import org.example.backend.Conexiones;
+import org.example.info.Cliente;
 
+import java.sql.Connection;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
 @Route("dashboard")
 public class Dashboard extends VerticalLayout {
     public Dashboard(){
+        Conexiones database = new Conexiones();
+        Connection conn =  database.getConnection();
+        Cliente user = database.userInfo("1726613688", conn);
+
+        if (conn != null){
+            try {
+                conn.close();
+            } catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+
         setSizeUndefined();
         setWidthFull();
         setWidth("390px");
@@ -42,13 +57,13 @@ public class Dashboard extends VerticalLayout {
 
 
         add(
-                headerUser(),
+                headerUser(user),
                 mainContainer,
                 navigationBar()
         );
     }
 
-    private Component headerUser(){
+    private Component headerUser(Cliente user){
         LocalDate time = LocalDate.now();
         DateTimeFormatter date = DateTimeFormatter.ofPattern("dd-MMMM-yyyy");
         String formato = time.format(date).toUpperCase();
@@ -62,7 +77,7 @@ public class Dashboard extends VerticalLayout {
         dateText.getStyle().set("color", "#FFFFFF");
         dateText.getStyle().set("font-size", "0.85rem");
 
-        Span header = new Span("HOLA, MARTIN OLALLA");
+        Span header = new Span("HOLA, " + user.getNameCliente().toUpperCase() + " " + user.getApellidoCliente().toUpperCase());
         header.getStyle().set("color", "#FFFFFF");
         header.getStyle().set("font-weight", "bold");
         header.getStyle().set("font-size", "1.2rem");
