@@ -11,6 +11,10 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.router.Route;
+import org.example.backend.Conexiones;
+
+import java.sql.Connection;
+import java.sql.Date;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,6 +24,10 @@ import java.util.List;
 public class VentanaNuevoIngreso extends VerticalLayout {
     private final List<VerticalLayout> category = new ArrayList<>();
     private final List<HorizontalLayout> timeSpam = new ArrayList<>();
+    private NumberField amount;
+    private DatePicker date;
+    private String categoria = "SUELDO";
+    private String frecuencia = "MENSUAL";
 
     public VentanaNuevoIngreso(){
         setSizeUndefined();
@@ -127,7 +135,7 @@ public class VentanaNuevoIngreso extends VerticalLayout {
 
         iconContainer.add(money);
 
-        NumberField amount = new NumberField();
+        amount = new NumberField();
         amount.setPlaceholder("0.00");
         amount.setWidthFull();
 
@@ -164,9 +172,14 @@ public class VentanaNuevoIngreso extends VerticalLayout {
 
         category.addAll(List.of(option1, option2, option3));
 
-        for (VerticalLayout card : category){
+        /*for (VerticalLayout card : category){
             card.addClickListener(e -> seleccionarTarjetaCategoria(card));
-        }
+        }*/
+
+        option1.addClickListener(e -> {seleccionarTarjetaCategoria(option1); categoria = "SUELDO";});
+        option2.addClickListener(e -> {seleccionarTarjetaCategoria(option2); categoria = "FREELANCE";});
+        option3.addClickListener(e -> {seleccionarTarjetaCategoria(option3); categoria = "OTROS";});
+
 
         seleccionarTarjetaCategoria(option1);
 
@@ -194,9 +207,14 @@ public class VentanaNuevoIngreso extends VerticalLayout {
 
         timeSpam.addAll(List.of(option1, option2, option3));
 
-        for (HorizontalLayout card1 : timeSpam){
+        /*for (HorizontalLayout card1 : timeSpam){
             card1.addClickListener(e -> seleccionarTarjetaFrecuencia(card1));
-        }
+        }*/
+
+        option1.addClickListener(e -> {seleccionarTarjetaFrecuencia(option1); frecuencia = "MENSUAL";});
+        option2.addClickListener(e -> {seleccionarTarjetaFrecuencia(option2); frecuencia = "QUINCENAL";});
+        option3.addClickListener(e -> {seleccionarTarjetaFrecuencia(option3); frecuencia = "SEMANAL";});
+
 
         seleccionarTarjetaFrecuencia(option1);
 
@@ -224,7 +242,18 @@ public class VentanaNuevoIngreso extends VerticalLayout {
         message.getStyle().set("font-size", "0.9rem");
         message.getStyle().set("font-weight", "bold");
 
-        container.addClickListener(e -> UI.getCurrent().navigate("dashboard"));
+        container.addClickListener(e ->{
+            if (amount.getValue() > 0 && amount.getValue() != null){
+                Conexiones database = new Conexiones();
+                Connection conn = database.getConnection();
+                if (conn != null){
+                    Date dateIncome = Date.valueOf(date.getValue());
+                    database.insertarMovimiento(conn, 1, "INGRESO", categoria, frecuencia, amount.getValue(), dateIncome);
+                    UI.getCurrent().navigate("dashboard");
+                }
+            }
+
+        });
         container.add(check, message);
         return container;
     }
@@ -281,17 +310,17 @@ public class VentanaNuevoIngreso extends VerticalLayout {
         label.getStyle().set("font-size", "0.75rem");
         label.getStyle().set("font-weight", "bold");
 
-        DatePicker fecha = new DatePicker();
-        fecha.setWidthFull();
-        fecha.setValue(LocalDate.now());
+        date = new DatePicker();
+        date.setWidthFull();
+        date.setValue(LocalDate.now());
 
-        fecha.getStyle().set("--lumo-base-color", "white");
-        fecha.getStyle().set("--lumo-contrast-10pct", "white");
-        fecha.getStyle().set("border-radius", "16px");
-        fecha.getStyle().set("border", "1px solid #D1D5DB");
-        fecha.getStyle().set("box-shadow", "0 4px 6px rgba(0, 0, 0, 0.05)");
+        date.getStyle().set("--lumo-base-color", "white");
+        date.getStyle().set("--lumo-contrast-10pct", "white");
+        date.getStyle().set("border-radius", "16px");
+        date.getStyle().set("border", "1px solid #D1D5DB");
+        date.getStyle().set("box-shadow", "0 4px 6px rgba(0, 0, 0, 0.05)");
 
-        contenedor.add(label, fecha);
+        contenedor.add(label, date);
         return contenedor;
     }
 

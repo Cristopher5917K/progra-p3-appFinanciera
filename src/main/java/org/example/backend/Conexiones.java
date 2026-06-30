@@ -1,12 +1,14 @@
 package org.example.backend;
 
-import org.apache.commons.configuration2.event.ConfigurationErrorEvent;
 import org.example.info.Cliente;
+import org.example.info.Movimientos;
 
 import javax.swing.*;
 import java.sql.*;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Conexiones {
 
@@ -44,19 +46,15 @@ public class Conexiones {
                 int value =  data.executeUpdate();
 
                 if (value > 0){
-                    JOptionPane.showMessageDialog(null, "EL USUARIO SE REGISTRO EXISTOSAMENTE");
+                    System.out.println("SE LOGRO CONECTAR");
                 } else {
-                    JOptionPane.showMessageDialog(null, "NO SE LOGRO REGISTRAR AL USUARIO");
+                    System.out.println("NO SE LOGRO CONECTAR");
                 }
             } catch (Exception e){
                 e.printStackTrace();
-            } finally {
-                try {
-                    conn.close();
-                } catch (SQLException e){
-                    e.printStackTrace();
-                }
             }
+        } else {
+            System.out.println("FALLO LA BASE DE DATOS");
         }
     }
 
@@ -85,6 +83,67 @@ public class Conexiones {
         }
         return null;
     }
+
+    public void insertarMovimiento(Connection conn, int id, String tipo, String categoria, String frecuencia, double monto, Date fecha){
+        String sql = "INSERT INTO movimiento (cliente, tipo_movimiento, categoria, frecuencia, monto, fecha) VALUES (?,?,?,?,?,?)";
+
+        try {
+            PreparedStatement data = conn.prepareStatement(sql);
+            data.setInt(1, id);
+            data.setString(2, tipo);
+            data.setString(3, categoria);
+            data.setString(4, frecuencia);
+            data.setDouble(5, monto);
+            data.setDate(6, fecha);
+
+            int value = data.executeUpdate();
+            if (value > 0){
+                System.out.println("SE LOGRO CONECTAR");
+            } else {
+                System.out.println("NO SE LOGRO CONECTAR");
+            }
+        } catch (SQLException e){
+            System.out.println("FALLO LA BASE DE DATOS");
+            e.printStackTrace();
+        }
+    }
+
+    public List<Movimientos> movements(String tipo, Connection conn){
+        String sql = "SELECT * FROM movimiento WHERE tipo_movimiento = ?";
+
+        List<Movimientos> info = new ArrayList<>();
+
+        try{
+            PreparedStatement data = conn.prepareStatement(sql);
+            data.setString(1, tipo);
+
+            ResultSet search =  data.executeQuery();
+            while (search.next()){
+                int id = search.getInt("id_movimiento");
+                String type = search.getString("tipo_movimiento");
+                String category = search.getString("categoria");
+                String frecuencia =  search.getString("frecuencia");
+                double monto = search.getDouble("monto");
+                Date fecha = search.getDate("fecha");
+
+                Movimientos movements = new Movimientos(
+                        id,
+                        type,
+                        category,
+                        frecuencia,
+                        monto,
+                        fecha
+                );
+
+                info.add(movements);
+            }
+        } catch (SQLException e){
+            e.printStackTrace();
+        }
+
+        return info;
+    }
+
 
 
 }

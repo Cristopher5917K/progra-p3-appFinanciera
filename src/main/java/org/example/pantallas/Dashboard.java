@@ -50,8 +50,8 @@ public class Dashboard extends VerticalLayout {
         mainContainer.setSpacing(true);
         mainContainer.add(
                 generateScroll(),
-                generatePercentage(1000, 1800),
-                recommendationsCards(1000,900),
+                generatePercentage(user.getInitialSalary(), 1800),
+                recommendationsCards(user.getInitialSalary(),900),
                 crearTarjetasMovimientos()
         );
 
