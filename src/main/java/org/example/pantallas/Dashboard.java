@@ -28,7 +28,7 @@ public class Dashboard extends VerticalLayout {
         Cliente user = null;
         
         try {
-            conn = database.getConnection();
+            conn = Conexiones.getConnection();
             user = database.userInfoById(1, conn);
         } catch (Exception e) {
             e.printStackTrace();
