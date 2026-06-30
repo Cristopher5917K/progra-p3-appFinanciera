@@ -30,6 +30,8 @@ public class Dashboard extends VerticalLayout {
         try {
             conn = database.getConnection();
             user = database.userInfoByIdFromUsuarios(1, conn);
+            conn = Conexiones.getConnection();
+            user = database.userInfoById(1, conn);
         } catch (Exception e) {
             e.printStackTrace();
         }
