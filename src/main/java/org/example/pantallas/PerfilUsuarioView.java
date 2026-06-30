@@ -1,6 +1,6 @@
 package org.example.pantallas;
 
-import org.example.backend.Conexiones; // Asegúrate de que apunte a la carpeta correcta de tu conexión
+import org.example.backend.Conexiones;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Span;
@@ -10,9 +10,6 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.Route;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.Map;
 
 @Route("perfil")
