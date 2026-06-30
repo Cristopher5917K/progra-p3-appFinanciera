@@ -25,7 +25,7 @@ public class DatabaseInitializer {
                     stmt.execute(sqlStatement);
                 }
             }
-            System.out.println("✅ Estructura de la base de datos creada con éxito.");
+            System.out.println("Estructura de la base de datos creada con éxito.");
 
             // --- 2. Ejecutar data.sql para poblar los datos ---
             System.out.println("Ejecutando data.sql...");
@@ -35,10 +35,10 @@ public class DatabaseInitializer {
                     stmt.execute(sqlStatement);
                 }
             }
-            System.out.println("✅ Datos de prueba insertados con éxito.");
+            System.out.println("Datos de prueba insertados con éxito.");
 
         } catch (Exception e) {
-            System.err.println("❌ ERROR: No se pudo inicializar la base de datos.");
+            System.err.println("ERROR: No se pudo inicializar la base de datos.");
             e.printStackTrace();
         }
         System.out.println("--- INICIALIZACIÓN DE BASE DE DATOS COMPLETADA ---");
