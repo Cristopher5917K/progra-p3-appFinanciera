@@ -24,15 +24,19 @@ import java.time.format.DateTimeFormatter;
 public class Dashboard extends VerticalLayout {
     public Dashboard(){
         Conexiones database = new Conexiones();
-        Connection conn =  database.getConnection();
-        Cliente user = database.userInfo("1726613688", conn);
+        Connection conn = null;
+        Cliente user = null;
+        
+        try {
+            conn = database.getConnection();
+            user = database.userInfoById(1, conn);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
-        if (conn != null){
-            try {
-                conn.close();
-            } catch (Exception e){
-                e.printStackTrace();
-            }
+        if (user == null) {
+            add(new Span("Error: Usuario no encontrado o error de conexión"));
+            return;
         }
 
         setSizeUndefined();
@@ -61,6 +65,14 @@ public class Dashboard extends VerticalLayout {
                 mainContainer,
                 navigationBar()
         );
+
+        if (conn != null) {
+            try {
+                conn.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     private Component headerUser(Cliente user){
@@ -153,7 +165,7 @@ public class Dashboard extends VerticalLayout {
         header.setAlignItems(Alignment.BASELINE);
 
         H4 info = new H4("CAPACIDAD DE AHORRO");
-        info.getStyle().set("font-zise", "0.9rem");
+        info.getStyle().set("font-size", "0.9rem");
 
         int percentage = (int)((savings / goal) * 100);
         if (percentage > 100){
@@ -357,7 +369,7 @@ public class Dashboard extends VerticalLayout {
 
         if (esIngreso){
             container.getStyle().set("background-color", "#88E788");
-            card.getStyle().set("background-color", "#80EF8080");
+            card.getStyle().set("background-color", "#80EF80");
             icon.setColor("#28a745");
         } else {
             container.getStyle().set("background-color", "#FF746C");
