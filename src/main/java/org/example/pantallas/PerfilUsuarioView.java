@@ -4,6 +4,8 @@ import org.example.backend.Conexiones;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
@@ -14,6 +16,9 @@ import java.util.Map;
 
 @Route("perfil")
 public class PerfilUsuarioView extends VerticalLayout {
+
+    private Integer idUsuario;
+    private Connection con;
 
     /*Declaramos las variables*/
     private Span lblNombreCompleto;
@@ -29,20 +34,18 @@ public class PerfilUsuarioView extends VerticalLayout {
 
     private Button btnEditar;
     private Button btnGuardar;
+    private Button btnCancelar;
 
     public PerfilUsuarioView() {
-        /**Configuramos la pantalla completa*/
         this.setSizeFull();
         this.setAlignItems(Alignment.CENTER);
         this.setPadding(false);
         this.setSpacing(false);
-        /**Creamos un contenedor padre para toda la vista*/
+
         VerticalLayout container = new VerticalLayout();
         container.setWidth("100%");
-        //container.getStyle().set("max-width", "600px");
         container.setPadding(false);
 
-        /**Creamos el primer contenedor para la vista del usuario*/
         VerticalLayout seccionPerfil = new VerticalLayout();
         seccionPerfil.getStyle().set("background-color", "#203a60");
         seccionPerfil.setWidth("100%");
@@ -50,8 +53,6 @@ public class PerfilUsuarioView extends VerticalLayout {
         seccionPerfil.getStyle().set("border-top-left-radius","0px");
         seccionPerfil.getStyle().set("border-top-right-radius","0px");
 
-
-        /**Creamos el bloque del titulo*/
         VerticalLayout mainTitle = new VerticalLayout();
         mainTitle.setWidth("100%");
         mainTitle.setPadding(false);
@@ -61,7 +62,6 @@ public class PerfilUsuarioView extends VerticalLayout {
         titulo.getStyle().set("margin", "0");
         mainTitle.add(titulo);
 
-        /**Creamos la tarjeta principal donde va a estar la info del usuario*/
         HorizontalLayout userCard = new HorizontalLayout();
         userCard.getStyle().set("background-color", "rgba(255, 255, 255, 0.05)");
         userCard.getStyle().set("backdrop-filter", "blur(10px)");
@@ -71,7 +71,6 @@ public class PerfilUsuarioView extends VerticalLayout {
         userCard.getStyle().set("flex-wrap", "wrap");
         userCard.setAlignItems(Alignment.CENTER);
 
-        /**Inicializamos las variables que van a ir en la tarjeta*/
         String nombre="";
         String apellido="";
         String cedula="";
@@ -79,32 +78,29 @@ public class PerfilUsuarioView extends VerticalLayout {
         double sueldo=0.0;
 
         try{
-            /**Realizamos la peticion para el id del usuario*/
-            Integer idUsuario=(Integer) com.vaadin.flow.server.VaadinSession.getCurrent().getAttribute("usuarioId");
-            if (idUsuario==null){
-                idUsuario=1;
+            idUsuario = (Integer) com.vaadin.flow.server.VaadinSession.getCurrent().getAttribute("usuarioId");
+            if (idUsuario == null) {
+                idUsuario = 1;
             }
-            /**Realizamos la conexion con la base de datos*/
-            Connection con = Conexiones.getConnection();
+            con = Conexiones.getConnection();
             Map<String, Object> profile = new Conexiones().userProfileInfo(idUsuario, con);
             
             if (profile != null){
                 nombre = (String) profile.get("nombre");
                 apellido = (String) profile.get("apellido");
                 cedula = (String) profile.get("cedula");
-                correo = (String)profile.get("correo");
+                correo = (String) profile.getOrDefault("correo", "");
                 sueldo = (Double) profile.get("sueldo");
             }
 
-            /**Extraemos las iniciales para el recuadro del usuario*/
-            String inicialNombre = (nombre !=null&& !nombre.isEmpty())?nombre.substring(0,1).toUpperCase():"";
-            String inicialApellido = (apellido !=null && !apellido.isEmpty())?apellido.substring(0,1).toUpperCase():"";
-            String iniciales = inicialNombre+inicialApellido;
+            String inicialNombre = (nombre != null && !nombre.isEmpty()) ? nombre.substring(0,1).toUpperCase() : "";
+            String inicialApellido = (apellido != null && !apellido.isEmpty()) ? apellido.substring(0,1).toUpperCase() : "";
+            String iniciales = inicialNombre + inicialApellido;
 
-            VerticalLayout avatar=new VerticalLayout();
+            VerticalLayout avatar = new VerticalLayout();
             avatar.setWidth("75px");
             avatar.setHeight("75px");
-            avatar.getStyle().set("background-color", "#2ecc71"); // Verde brillante
+            avatar.getStyle().set("background-color", "#2ecc71");
             avatar.getStyle().set("border-radius", "12px");
             avatar.setJustifyContentMode(JustifyContentMode.CENTER);
             avatar.setAlignItems(Alignment.CENTER);
@@ -116,67 +112,103 @@ public class PerfilUsuarioView extends VerticalLayout {
             txtIniciales.getStyle().set("font-size", "22px");
             avatar.add(txtIniciales);
 
-            lblNombreCompleto =new Span(nombre + " " + apellido);
+            lblNombreCompleto = new Span(nombre + " " + apellido);
             lblNombreCompleto.getStyle().set("color", "white");
             lblNombreCompleto.getStyle().set("font-weight", "bold");
             lblNombreCompleto.getStyle().set("font-size", "20px");
 
-            lblCorreo=new Span("Correo: "+correo);
+            lblCorreo = new Span("Correo: " + correo);
             lblCorreo.getStyle().set("color", "#8fa3bf");
 
-            lblCedula=new Span("Cedula: "+cedula);
+            lblCedula = new Span("Cedula: " + cedula);
             lblCedula.getStyle().set("color", "#8fa3bf");
 
-            lblSueldo=new Span("Sueldo: $"+sueldo);
+            lblSueldo = new Span("Sueldo: $" + sueldo);
             lblSueldo.getStyle().set("color", "#8fa3bf");
 
-            txtNombre=new TextField("Nombre");
+            // TextFields para editar
+            txtNombre = new TextField("Nombre");
             txtNombre.setValue(nombre);
             txtNombre.setVisible(false);
+            txtNombre.setWidthFull();
 
             txtApellido = new TextField("Apellido");
             txtApellido.setValue(apellido);
             txtApellido.setVisible(false);
+            txtApellido.setWidthFull();
 
             txtCorreo = new TextField("Correo");
             txtCorreo.setValue(correo);
             txtCorreo.setVisible(false);
+            txtCorreo.setWidthFull();
 
             txtCedula = new TextField("Cédula");
             txtCedula.setValue(cedula);
             txtCedula.setVisible(false);
+            txtCedula.setWidthFull();
 
             txtSueldo = new TextField("Sueldo");
             txtSueldo.setValue(String.valueOf(sueldo));
             txtSueldo.setVisible(false);
+            txtSueldo.setWidthFull();
 
-            btnEditar = new Button("Editar");
-            btnGuardar = new Button("Guardar");
+            // Botones
+            btnEditar = new Button(VaadinIcon.EDIT.create());
+            btnEditar.getStyle().set("border-radius", "50%");
+            btnEditar.getStyle().set("width", "40px");
+            btnEditar.getStyle().set("height", "40px");
+            btnEditar.getStyle().set("min-width", "40px");
+            btnEditar.getStyle().set("background-color", "#28a745");
+            btnEditar.getStyle().set("color", "white");
+            btnEditar.getStyle().set("cursor", "pointer");
+
+            btnGuardar = new Button("✓ Guardar");
+            btnGuardar.getStyle().set("background-color", "#28a745");
+            btnGuardar.getStyle().set("color", "white");
+            btnGuardar.getStyle().set("font-weight", "bold");
             btnGuardar.setVisible(false);
+            btnGuardar.setWidthFull();
 
-            VerticalLayout infoUsuario =new VerticalLayout();
+            btnCancelar = new Button("✕ Cancelar");
+            btnCancelar.getStyle().set("background-color", "#dc3545");
+            btnCancelar.getStyle().set("color", "white");
+            btnCancelar.getStyle().set("font-weight", "bold");
+            btnCancelar.setVisible(false);
+            btnCancelar.setWidthFull();
+
+            // Listeners
+            btnEditar.addClickListener(event -> toggleModoEdicion(true));
+            btnGuardar.addClickListener(event -> guardarCambios());
+            btnCancelar.addClickListener(event -> toggleModoEdicion(false));
+
+            VerticalLayout infoUsuario = new VerticalLayout();
             infoUsuario.setPadding(false);
             infoUsuario.setSpacing(true);
-            infoUsuario.setWidth("auto"); // No empuja el avatar
+            infoUsuario.setWidth("100%");
 
-            // Metemos los textos, las cajas de edición y el botón de guardar cambios
             infoUsuario.add(lblNombreCompleto, lblCorreo, lblCedula, lblSueldo);
             infoUsuario.add(txtNombre, txtApellido, txtCorreo, txtCedula, txtSueldo);
-            infoUsuario.add(btnGuardar);
+            
+            HorizontalLayout botonesAccion = new HorizontalLayout();
+            botonesAccion.setSpacing(true);
+            botonesAccion.setWidthFull();
+            botonesAccion.add(btnGuardar, btnCancelar);
+            botonesAccion.setVisible(false);
+            
+            infoUsuario.add(botonesAccion);
+            
             userCard.add(avatar, infoUsuario);
-            seccionPerfil.add(mainTitle, userCard);
+            seccionPerfil.add(mainTitle, userCard, btnEditar);
             container.add(seccionPerfil);
             this.add(container);
 
-        }catch (Exception e){
+        } catch (Exception e) {
             add(new Span("Error al conectar a la base de datos: " + e.getMessage()));
             e.printStackTrace();
         }
     }
 
-    // 14. Método auxiliar para activar o desactivar el modo edición de golpe
     private void toggleModoEdicion(boolean editar) {
-        // Si editar es true, oculta las etiquetas y muestra las cajas. Si es false, al revés.
         lblNombreCompleto.setVisible(!editar);
         lblCorreo.setVisible(!editar);
         lblCedula.setVisible(!editar);
@@ -189,5 +221,38 @@ public class PerfilUsuarioView extends VerticalLayout {
         txtCedula.setVisible(editar);
         txtSueldo.setVisible(editar);
         btnGuardar.setVisible(editar);
+        btnCancelar.setVisible(editar);
+    }
+
+    private void guardarCambios() {
+        try {
+            String nombre = txtNombre.getValue();
+            String apellido = txtApellido.getValue();
+            String cedula = txtCedula.getValue();
+            double sueldo = Double.parseDouble(txtSueldo.getValue());
+
+            if (nombre.isEmpty() || apellido.isEmpty() || cedula.isEmpty()) {
+                Notification.show("⚠️ Completa todos los campos", 3000, Notification.Position.TOP_CENTER);
+                return;
+            }
+
+            Conexiones db = new Conexiones();
+            boolean actualizado = db.updateUserProfile(idUsuario, nombre, apellido, cedula, sueldo, con);
+
+            if (actualizado) {
+                Notification.show("✅ Perfil actualizado exitosamente", 3000, Notification.Position.TOP_CENTER);
+                lblNombreCompleto.setText(nombre + " " + apellido);
+                lblCedula.setText("Cedula: " + cedula);
+                lblSueldo.setText("Sueldo: $" + sueldo);
+                toggleModoEdicion(false);
+            } else {
+                Notification.show("❌ Error al guardar cambios", 3000, Notification.Position.TOP_CENTER);
+            }
+        } catch (NumberFormatException e) {
+            Notification.show("❌ El sueldo debe ser un número válido", 3000, Notification.Position.TOP_CENTER);
+        } catch (Exception e) {
+            Notification.show("❌ Error: " + e.getMessage(), 3000, Notification.Position.TOP_CENTER);
+            e.printStackTrace();
+        }
     }
 }

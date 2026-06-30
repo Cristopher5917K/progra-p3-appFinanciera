@@ -250,6 +250,29 @@ public class Conexiones {
         return null;
     }
 
+    public boolean updateUserProfile(int idUsuario, String nombre, String apellido, String cedula, double sueldo, Connection conn) {
+        String sqlUpdate = "UPDATE usuarios SET nombre = ?, apellido = ?, cedula = ?, sueldo = ? WHERE id = ?";
+
+        try {
+            PreparedStatement update = conn.prepareStatement(sqlUpdate);
+            update.setString(1, nombre);
+            update.setString(2, apellido);
+            update.setString(3, cedula);
+            update.setDouble(4, sueldo);
+            update.setInt(5, idUsuario);
+
+            int result = update.executeUpdate();
+            if (result > 0) {
+                System.out.println("✅ Usuario actualizado exitosamente");
+                return true;
+            }
+        } catch (Exception e) {
+            System.out.println("❌ Error al actualizar usuario: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return false;
+    }
+
 
 
 }
