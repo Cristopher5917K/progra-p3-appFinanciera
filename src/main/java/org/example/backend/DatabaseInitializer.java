@@ -12,22 +12,19 @@ public class DatabaseInitializer {
 
     @PostConstruct
     public void initialize() {
-        System.out.println("--- INICIANDO INICIALIZACIÓN DE BASE DE DATOS ---");
+        System.out.println("Iniciando inicialización de base de datos...");
         try (Connection conn = Conexiones.getConnection();
              Statement stmt = conn.createStatement()) {
 
-            // --- 1. Ejecutar schema.sql para crear la estructura ---
             System.out.println("Ejecutando schema.sql...");
             String schemaSql = readSqlFile("schema.sql");
-            // Dividir el script en sentencias individuales por el punto y coma
             for (String sqlStatement : schemaSql.split(";")) {
                 if (!sqlStatement.trim().isEmpty()) {
                     stmt.execute(sqlStatement);
                 }
             }
-            System.out.println("✅ Estructura de la base de datos creada con éxito.");
+            System.out.println("Estructura de la base de datos creada con éxito.");
 
-            // --- 2. Ejecutar data.sql para poblar los datos ---
             System.out.println("Ejecutando data.sql...");
             String dataSql = readSqlFile("data.sql");
             for (String sqlStatement : dataSql.split(";")) {
@@ -35,13 +32,13 @@ public class DatabaseInitializer {
                     stmt.execute(sqlStatement);
                 }
             }
-            System.out.println("✅ Datos de prueba insertados con éxito.");
+            System.out.println("Datos de prueba insertados con éxito.");
 
         } catch (Exception e) {
-            System.err.println("❌ ERROR: No se pudo inicializar la base de datos.");
+            System.err.println("ERROR: No se pudo inicializar la base de datos.");
             e.printStackTrace();
         }
-        System.out.println("--- INICIALIZACIÓN DE BASE DE DATOS COMPLETADA ---");
+        System.out.println("Inicialización de base de datos completada.");
     }
 
     private String readSqlFile(String fileName) throws Exception {

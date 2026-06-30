@@ -42,7 +42,7 @@ public class MetasView extends VerticalLayout {
         try {
             idUsuario = (Integer) VaadinSession.getCurrent().getAttribute("usuarioId");
             if (idUsuario == null) {
-                idUsuario = 1; // Fallback to user 1 if not in session
+                idUsuario = 1;
             }
             createUI();
         } catch (Exception e) {
@@ -72,7 +72,6 @@ public class MetasView extends VerticalLayout {
         setPadding(false);
         setSpacing(false);
 
-        // Header
         header = new VerticalLayout();
         header.getStyle().set("background", "linear-gradient(160deg, #0D2B55 0%, #1a4a8a 100%)");
         header.getStyle().set("padding-bottom", "16px");
@@ -93,7 +92,6 @@ public class MetasView extends VerticalLayout {
 
         header.add(title, subtitle);
 
-        // Filtering
         ComboBox<String> filterComboBox = new ComboBox<>("Ordenar por");
         filterComboBox.setItems("Más Recientes (FIFO)", "Menos Recientes (LIFO)", "Nombre (A-Z)", "Progreso (Mayor a Menor)");
         filterComboBox.addValueChangeListener(event -> sortGoals(event.getValue()));
@@ -106,7 +104,6 @@ public class MetasView extends VerticalLayout {
         goalsContainer.setPadding(true);
         goalsContainer.setSpacing(true);
 
-        // FAB
         Button fab = new Button(new Icon(VaadinIcon.PLUS));
         fab.getStyle().set("position", "fixed");
         fab.getStyle().set("bottom", "20px");
