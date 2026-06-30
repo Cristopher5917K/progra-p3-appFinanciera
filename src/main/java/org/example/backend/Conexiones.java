@@ -1,33 +1,40 @@
 package org.example.backend;
 
+import io.github.cdimascio.dotenv.Dotenv;
 import org.example.info.Cliente;
 import org.example.info.Movimientos;
 
 import javax.swing.*;
 import java.sql.*;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+
 
 public class Conexiones {
 
-    public Connection getConnection(){
-        String url = "jdbc:mysql://localhost:3306/smart_saving";
-        String user = "root";
-        String password = "isaacmasache65*"; //Deben registrar sus contraseñas
+    // Cargar el archivo .env
+    private static final Dotenv dotenv = Dotenv.load();
 
-        Connection conn = null;
+    // Leer las variables del archivo
+    private static final String URL = dotenv != null ? dotenv.get("DB_URL") : null;
+    private static final String USER = dotenv != null ? dotenv.get("DB_USER") : null;
+    private static final String PASSWORD = dotenv != null ? dotenv.get("DB_PASSWORD") : null;
 
-        try {
-            conn = DriverManager.getConnection(url, user, password);
-            return conn;
-        } catch (Exception e){
-            JOptionPane.showMessageDialog(null, "NO SE LOGRO CONECTAR A LA BASE DE DATOS" );
-            e.printStackTrace();
+    private static Connection connection = null;
+
+    public static Connection getConnection() throws SQLException {
+        if (URL == null || USER == null || PASSWORD == null) {
+            throw new SQLException("Variables de entorno no configuradas. Verifica el archivo .env");
         }
-
-        return null;
+        
+        if (connection == null || connection.isClosed()) {
+            try {
+                Class.forName("com.mysql.cj.jdbc.Driver");
+                connection = DriverManager.getConnection(URL, USER, PASSWORD);
+            } catch (ClassNotFoundException e) {
+                throw new SQLException("Driver de MySQL no encontrado", e);
+            }
+        }
+        return connection;
     }
 
     public void registerUser(Connection conn, String name, String apellido, String cedula, double sueldo, String password){
@@ -84,7 +91,74 @@ public class Conexiones {
         return null;
     }
 
-    public void insertarMovimiento(Connection conn, int id, String tipo, String categoria, String frecuencia, double monto, Date fecha){
+    public Cliente userInfoById(int idUsuario, Connection conn){
+        Cliente user = getUserByIdHelper(idUsuario, conn);
+        if (user == null) {
+            user = getUserByIdHelper(1, conn);
+        }
+        return user;
+    }
+
+    private Cliente getUserByIdHelper(int idUsuario, Connection conn) {
+        String sqlSearch = "SELECT * FROM cliente WHERE id_cliente = ?";
+
+        try {
+            PreparedStatement search = conn.prepareStatement(sqlSearch);
+            search.setInt(1, idUsuario);
+            ResultSet success = search.executeQuery();
+            
+            if (success.next()){
+                return clienteFromResultSet(success);
+            }
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    private Cliente clienteFromResultSet(ResultSet rs) throws SQLException {
+        return new Cliente(
+                rs.getInt("id_cliente"),
+                rs.getString("name_cliente"),
+                rs.getString("apellido_cliente"),
+                rs.getString("password"),
+                rs.getString("cedula"),
+                rs.getDouble("initial_salary")
+        );
+    }
+
+    public Map<String, Object> userProfileInfo(int idUsuario, Connection conn){
+        Map<String, Object> profile = getUserProfileHelper(idUsuario, conn);
+        if (profile == null) {
+            profile = getUserProfileHelper(1, conn);
+        }
+        return profile;
+    }
+
+    private Map<String, Object> getUserProfileHelper(int idUsuario, Connection conn) {
+        String sqlSearch = "SELECT nombre, apellido,correo, cedula, sueldo FROM usuarios WHERE id = ?";
+
+        try {
+            PreparedStatement search = conn.prepareStatement(sqlSearch);
+            search.setInt(1, idUsuario);
+            ResultSet success = search.executeQuery();
+            
+            if (success.next()){
+                Map<String, Object> profile = new HashMap<>();
+                profile.put("nombre", success.getString("nombre"));
+                profile.put("apellido", success.getString("apellido"));
+                profile.put("correo", success.getString("correo"));
+                profile.put("cedula", success.getString("cedula"));
+                profile.put("sueldo", success.getDouble("sueldo"));
+                return profile;
+            }
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public void insertarMovimiento(Connection conn, int id, String tipo, String categoria, String frecuencia, double monto, java.sql.Date fecha){
         String sql = "INSERT INTO movimiento (cliente, tipo_movimiento, categoria, frecuencia, monto, fecha) VALUES (?,?,?,?,?,?)";
 
         try {
@@ -124,7 +198,7 @@ public class Conexiones {
                 String category = search.getString("categoria");
                 String frecuencia =  search.getString("frecuencia");
                 double monto = search.getDouble("monto");
-                Date fecha = search.getDate("fecha");
+                java.sql.Date fecha = search.getDate("fecha");
 
                 Movimientos movements = new Movimientos(
                         id,
@@ -142,6 +216,38 @@ public class Conexiones {
         }
 
         return info;
+    }
+
+    public Cliente userInfoByIdFromUsuarios(int idUsuario, Connection conn){
+        Cliente user = getUserFromUsuariosHelper(idUsuario, conn);
+        if (user == null) {
+            user = getUserFromUsuariosHelper(1, conn);
+        }
+        return user;
+    }
+
+    private Cliente getUserFromUsuariosHelper(int idUsuario, Connection conn) {
+        String sqlSearch = "SELECT nombre, apellido, cedula, correo, sueldo FROM usuarios WHERE id = ?";
+
+        try {
+            PreparedStatement search = conn.prepareStatement(sqlSearch);
+            search.setInt(1, idUsuario);
+            ResultSet success = search.executeQuery();
+            
+            if (success.next()){
+                return new Cliente(
+                        idUsuario,
+                        success.getString("nombre"),
+                        success.getString("apellido"),
+                        "",
+                        success.getString("cedula"),
+                        success.getDouble("sueldo")
+                );
+            }
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+        return null;
     }
 
 

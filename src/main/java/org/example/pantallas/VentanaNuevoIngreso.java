@@ -245,11 +245,15 @@ public class VentanaNuevoIngreso extends VerticalLayout {
         container.addClickListener(e ->{
             if (amount.getValue() > 0 && amount.getValue() != null){
                 Conexiones database = new Conexiones();
-                Connection conn = database.getConnection();
-                if (conn != null){
-                    Date dateIncome = Date.valueOf(date.getValue());
-                    database.insertarMovimiento(conn, 1, "INGRESO", categoria, frecuencia, amount.getValue(), dateIncome);
-                    UI.getCurrent().navigate("dashboard");
+                try {
+                    Connection conn = database.getConnection();
+                    if (conn != null){
+                        Date dateIncome = Date.valueOf(date.getValue());
+                        database.insertarMovimiento(conn, 1, "INGRESO", categoria, frecuencia, amount.getValue(), dateIncome);
+                        UI.getCurrent().navigate("dashboard");
+                    }
+                } catch (Exception ex) {
+                    ex.printStackTrace();
                 }
             }
 

@@ -1,6 +1,6 @@
-package org.example.views;
+package org.example.pantallas;
 
-import database.DatabaseConnection; // Asegúrate de que apunte a la carpeta correcta de tu conexión
+import org.example.backend.Conexiones; // Asegúrate de que apunte a la carpeta correcta de tu conexión
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Span;
@@ -13,6 +13,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Map;
 
 @Route("perfil")
 public class PerfilUsuarioView extends VerticalLayout {
@@ -87,18 +88,15 @@ public class PerfilUsuarioView extends VerticalLayout {
                 idUsuario=1;
             }
             /**Realizamos la conexion con la base de datos*/
-            Connection con =DatabaseConnection.getConnection();
-            String query="Select nombre, apellido, cedula, correo, sueldo FROM usuarios WHERE id=?";
-            PreparedStatement ps=con.prepareStatement(query);
-            ps.setInt(1, idUsuario);
-
-            ResultSet rs= ps.executeQuery();
-            if (rs.next()){
-                nombre=rs.getString("nombre");
-                apellido=rs.getString("apellido");
-                cedula=rs.getString("cedula");
-                correo=rs.getString("correo");
-                sueldo=rs.getDouble("sueldo");
+            Connection con = Conexiones.getConnection();
+            Map<String, Object> profile = new Conexiones().userProfileInfo(idUsuario, con);
+            
+            if (profile != null){
+                nombre = (String) profile.get("nombre");
+                apellido = (String) profile.get("apellido");
+                cedula = (String) profile.get("cedula");
+                correo = (String)profile.get("correo");
+                sueldo = (Double) profile.get("sueldo");
             }
 
             /**Extraemos las iniciales para el recuadro del usuario*/
@@ -155,8 +153,25 @@ public class PerfilUsuarioView extends VerticalLayout {
             txtSueldo.setValue(String.valueOf(sueldo));
             txtSueldo.setVisible(false);
 
+            btnEditar = new Button("Editar");
+            btnGuardar = new Button("Guardar");
+            btnGuardar.setVisible(false);
 
-        }catch (SQLException e){
+            VerticalLayout infoUsuario =new VerticalLayout();
+            infoUsuario.setPadding(false);
+            infoUsuario.setSpacing(true);
+            infoUsuario.setWidth("auto"); // No empuja el avatar
+
+            // Metemos los textos, las cajas de edición y el botón de guardar cambios
+            infoUsuario.add(lblNombreCompleto, lblCorreo, lblCedula, lblSueldo);
+            infoUsuario.add(txtNombre, txtApellido, txtCorreo, txtCedula, txtSueldo);
+            infoUsuario.add(btnGuardar);
+            userCard.add(avatar, infoUsuario);
+            seccionPerfil.add(mainTitle, userCard);
+            container.add(seccionPerfil);
+            this.add(container);
+
+        }catch (Exception e){
             add(new Span("Error al conectar a la base de datos: " + e.getMessage()));
             e.printStackTrace();
         }
