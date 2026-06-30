@@ -1,5 +1,10 @@
 package org.example.pantallas;
 
+import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.html.H3;
+import com.vaadin.flow.component.html.H4;
+import com.vaadin.flow.component.icon.Icon;
+import org.apache.commons.io.input.ThrottledInputStream;
 import org.example.backend.Conexiones;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.H2;
@@ -35,13 +40,14 @@ public class PerfilUsuarioView extends VerticalLayout {
     private Button btnEditar;
     private Button btnGuardar;
     private Button btnCancelar;
+    private HorizontalLayout botonesAccion;
 
     public PerfilUsuarioView() {
         this.setSizeFull();
         this.setAlignItems(Alignment.CENTER);
         this.setPadding(false);
         this.setSpacing(false);
-
+        this.getStyle().set("background-color", "#F8F9FA");
         VerticalLayout container = new VerticalLayout();
         container.setWidth("100%");
         container.setPadding(false);
@@ -166,14 +172,12 @@ public class PerfilUsuarioView extends VerticalLayout {
             btnGuardar.getStyle().set("background-color", "#28a745");
             btnGuardar.getStyle().set("color", "white");
             btnGuardar.getStyle().set("font-weight", "bold");
-            btnGuardar.setVisible(false);
             btnGuardar.setWidthFull();
 
             btnCancelar = new Button("✕ Cancelar");
             btnCancelar.getStyle().set("background-color", "#dc3545");
             btnCancelar.getStyle().set("color", "white");
             btnCancelar.getStyle().set("font-weight", "bold");
-            btnCancelar.setVisible(false);
             btnCancelar.setWidthFull();
 
             // Listeners
@@ -189,10 +193,9 @@ public class PerfilUsuarioView extends VerticalLayout {
             infoUsuario.add(lblNombreCompleto, lblCorreo, lblCedula, lblSueldo);
             infoUsuario.add(txtNombre, txtApellido, txtCorreo, txtCedula, txtSueldo);
             
-            HorizontalLayout botonesAccion = new HorizontalLayout();
+            botonesAccion = new HorizontalLayout(btnGuardar, btnCancelar);
             botonesAccion.setSpacing(true);
             botonesAccion.setWidthFull();
-            botonesAccion.add(btnGuardar, btnCancelar);
             botonesAccion.setVisible(false);
             
             infoUsuario.add(botonesAccion);
@@ -200,6 +203,51 @@ public class PerfilUsuarioView extends VerticalLayout {
             userCard.add(avatar, infoUsuario);
             seccionPerfil.add(mainTitle, userCard, btnEditar);
             container.add(seccionPerfil);
+
+            // Sección de Actividad
+            VerticalLayout containerActividad = new VerticalLayout();
+            containerActividad.setWidth("100%");
+            containerActividad.setPadding(false);
+            containerActividad.setSpacing(false);
+            containerActividad.getStyle().set("margin-top", "20px");
+
+            H4 tituloActividad = new H4("Actividad");
+            tituloActividad.getStyle().set("color", "#94A3B8");
+            tituloActividad.getStyle().set("padding","15px");
+            containerActividad.add(tituloActividad);
+
+            // Sección de Metas
+            VerticalLayout containerMetas = new VerticalLayout();
+            containerMetas.setWidth("100%");
+            containerMetas.getStyle().set("background-color", "white");
+            containerMetas.getStyle().set("border-radius", "15px");
+            containerMetas.getStyle().set("cursor", "pointer");
+            containerMetas.getStyle().set("transition", "background-color 0.3s");
+            containerMetas.addClickListener(e -> UI.getCurrent().navigate("metas"));
+            containerMetas.getElement().addEventListener("mouseover", e -> {
+                containerMetas.getStyle().set("background-color", "#F0F0F0");
+            });
+            containerMetas.getElement().addEventListener("mouseout", e -> {
+                containerMetas.getStyle().set("background-color", "white");
+            });
+
+            Icon iconMetas = VaadinIcon.BULLSEYE.create();
+            iconMetas.getStyle().set("color", "black");
+            iconMetas.getStyle().set("font-size", "24px");
+
+            H3 tituloMetas = new H3("Mis metas");
+            tituloMetas.getStyle().set("color", "black");
+            tituloMetas.getStyle().set("margin", "0");
+
+            HorizontalLayout contentMetas = new HorizontalLayout(iconMetas, tituloMetas);
+            contentMetas.setAlignItems(Alignment.CENTER);
+            contentMetas.setSpacing(true);
+            contentMetas.getStyle().set("margin", "auto");
+
+            containerMetas.add(contentMetas);
+            containerActividad.add(containerMetas);
+            container.add(containerActividad);
+
             this.add(container);
 
         } catch (Exception e) {
@@ -220,39 +268,26 @@ public class PerfilUsuarioView extends VerticalLayout {
         txtCorreo.setVisible(editar);
         txtCedula.setVisible(editar);
         txtSueldo.setVisible(editar);
-        btnGuardar.setVisible(editar);
-        btnCancelar.setVisible(editar);
+        botonesAccion.setVisible(editar);
     }
 
     private void guardarCambios() {
-        try {
-            String nombre = txtNombre.getValue();
-            String apellido = txtApellido.getValue();
-            String cedula = txtCedula.getValue();
-            double sueldo = Double.parseDouble(txtSueldo.getValue());
+        String nombre = txtNombre.getValue();
+        String apellido = txtApellido.getValue();
+        String cedula = txtCedula.getValue();
+        double sueldo = Double.parseDouble(txtSueldo.getValue());
 
-            if (nombre.isEmpty() || apellido.isEmpty() || cedula.isEmpty()) {
-                Notification.show("⚠️ Completa todos los campos", 3000, Notification.Position.TOP_CENTER);
-                return;
-            }
+        Conexiones db = new Conexiones();
+        boolean actualizado = db.updateUserProfile(idUsuario, nombre, apellido, cedula, sueldo, con);
 
-            Conexiones db = new Conexiones();
-            boolean actualizado = db.updateUserProfile(idUsuario, nombre, apellido, cedula, sueldo, con);
-
-            if (actualizado) {
-                Notification.show("✅ Perfil actualizado exitosamente", 3000, Notification.Position.TOP_CENTER);
-                lblNombreCompleto.setText(nombre + " " + apellido);
-                lblCedula.setText("Cedula: " + cedula);
-                lblSueldo.setText("Sueldo: $" + sueldo);
-                toggleModoEdicion(false);
-            } else {
-                Notification.show("❌ Error al guardar cambios", 3000, Notification.Position.TOP_CENTER);
-            }
-        } catch (NumberFormatException e) {
-            Notification.show("❌ El sueldo debe ser un número válido", 3000, Notification.Position.TOP_CENTER);
-        } catch (Exception e) {
-            Notification.show("❌ Error: " + e.getMessage(), 3000, Notification.Position.TOP_CENTER);
-            e.printStackTrace();
+        if (actualizado) {
+            Notification.show("Perfil actualizado con éxito", 3000, Notification.Position.TOP_CENTER);
+            lblNombreCompleto.setText(nombre + " " + apellido);
+            lblCedula.setText("Cedula: " + cedula);
+            lblSueldo.setText("Sueldo: $" + sueldo);
+            toggleModoEdicion(false);
+        } else {
+            Notification.show("Error al actualizar el perfil", 3000, Notification.Position.TOP_CENTER);
         }
     }
 }
