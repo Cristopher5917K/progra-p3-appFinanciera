@@ -248,8 +248,12 @@ public class VentanaNuevoIngreso extends VerticalLayout {
                 try {
                     Connection conn = database.getConnection();
                     if (conn != null){
+                        Integer idUsuario = (Integer) com.vaadin.flow.server.VaadinSession.getCurrent().getAttribute("usuarioId");
+                        if (idUsuario == null) {
+                            idUsuario = 1;
+                        }
                         Date dateIncome = Date.valueOf(date.getValue());
-                        database.insertarMovimiento(conn, 1, "INGRESO", categoria, frecuencia, amount.getValue(), dateIncome);
+                        database.insertarMovimiento(conn, idUsuario, "INGRESO", categoria, frecuencia, amount.getValue(), dateIncome);
                         UI.getCurrent().navigate("dashboard");
                     }
                 } catch (Exception ex) {

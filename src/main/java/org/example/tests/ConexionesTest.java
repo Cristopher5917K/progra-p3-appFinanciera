@@ -14,6 +14,7 @@ public class ConexionesTest {
         testGetConnection();
         testUserInfoById();
         testUserProfileInfo();
+        testUpdateUserProfile();
         
         System.out.println("\n=== Tests completados ===");
     }
@@ -79,6 +80,50 @@ public class ConexionesTest {
                 System.out.println("   - Sueldo: $" + profile.get("sueldo") + "\n");
             } else {
                 System.out.println("❌ FALLÓ: El perfil está vacío o es nulo\n");
+            }
+            conn.close();
+        } catch (Exception e) {
+            System.out.println("❌ FALLÓ: " + e.getMessage() + "\n");
+        }
+    }
+
+    /**
+     * Test para verificar que updateUserProfile actualiza correctamente los datos
+     */
+    public static void testUpdateUserProfile() {
+        System.out.println("TEST 4: Probando updateUserProfile()...");
+        try {
+            Connection conn = Conexiones.getConnection();
+            Conexiones db = new Conexiones();
+            
+            // Obtener datos actuales
+            Map<String, Object> profileAntes = db.userProfileInfo(1, conn);
+            String nombreAntes = (String) profileAntes.get("nombre");
+            String apellidoAntes = (String) profileAntes.get("apellido");
+            System.out.println("   Datos ANTES: " + nombreAntes + " " + apellidoAntes);
+            
+            // Actualizar con datos nuevos
+            boolean actualizado = db.updateUserProfile(1, "TestNombre", "TestApellido", "999XXXXXX", 999.99, conn);
+            
+            if (actualizado) {
+                // Verificar cambios
+                Map<String, Object> profileDespues = db.userProfileInfo(1, conn);
+                String nombreDespues = (String) profileDespues.get("nombre");
+                String apellidoDespues = (String) profileDespues.get("apellido");
+                System.out.println("   Datos DESPUÉS: " + nombreDespues + " " + apellidoDespues);
+                
+                if ("TestNombre".equals(nombreDespues) && "TestApellido".equals(apellidoDespues)) {
+                    System.out.println("✅ PASÓ: Actualización verificada correctamente\n");
+                    
+                    // Revertir cambios
+                    db.updateUserProfile(1, nombreAntes, apellidoAntes, (String) profileAntes.get("cedula"), 
+                                       (Double) profileAntes.get("sueldo"), conn);
+                    System.out.println("   (Datos revertidos al estado original)\n");
+                } else {
+                    System.out.println("❌ FALLÓ: Los datos no se actualizaron correctamente\n");
+                }
+            } else {
+                System.out.println("❌ FALLÓ: No se pudo actualizar el usuario\n");
             }
             conn.close();
         } catch (Exception e) {

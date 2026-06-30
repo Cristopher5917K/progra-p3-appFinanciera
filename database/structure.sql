@@ -49,11 +49,28 @@ CREATE TABLE IF NOT EXISTS movimiento (
 );
 
 -- ============================================================
+-- 4. TABLA: metas (Metas de Ahorro)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS metas (
+    id_meta INT AUTO_INCREMENT PRIMARY KEY,
+    id_cliente INT NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    target_amount DECIMAL(10, 2) NOT NULL,
+    saved_amount DECIMAL(10, 2) DEFAULT 0.00,
+    deadline DATE,
+    color VARCHAR(7),
+    category VARCHAR(50),
+    creation_date DATE NOT NULL,
+    FOREIGN KEY (id_cliente) REFERENCES cliente(id_cliente) ON DELETE CASCADE
+);
+
+-- ============================================================
 -- ÍNDICES PARA OPTIMIZACIÓN
 -- ============================================================
 CREATE INDEX idx_tipo_movimiento ON movimiento(tipo_movimiento);
 CREATE INDEX idx_cliente_movimiento ON movimiento(cliente);
 CREATE INDEX idx_fecha_movimiento ON movimiento(fecha);
+CREATE INDEX idx_cliente_meta ON metas(id_cliente);
 
 -- ============================================================
 -- VERIFICACIÓN

@@ -2,11 +2,15 @@ package org.example.backend;
 
 import io.github.cdimascio.dotenv.Dotenv;
 import org.example.info.Cliente;
+import org.example.info.Meta;
 import org.example.info.Movimientos;
 
 import javax.swing.*;
 import java.sql.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 
 public class Conexiones {
@@ -250,6 +254,137 @@ public class Conexiones {
         return null;
     }
 
+    public boolean updateUserProfile(int idUsuario, String nombre, String apellido, String cedula, double sueldo, Connection conn) {
+        String sqlUpdate = "UPDATE usuarios SET nombre = ?, apellido = ?, cedula = ?, sueldo = ? WHERE id = ?";
 
+        try {
+            PreparedStatement update = conn.prepareStatement(sqlUpdate);
+            update.setString(1, nombre);
+            update.setString(2, apellido);
+            update.setString(3, cedula);
+            update.setDouble(4, sueldo);
+            update.setInt(5, idUsuario);
 
+            int result = update.executeUpdate();
+            if (result > 0) {
+                System.out.println("✅ Usuario actualizado exitosamente");
+                return true;
+            }
+        } catch (Exception e) {
+            System.out.println("❌ Error al actualizar usuario: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public Map<String, Object> guardarCambiosUsuario(int idUsuario, String nombre, String apellido, String cedula, String sueldo, Connection conn) {
+        Map<String, Object> resultado = new HashMap<>();
+        
+        try {
+            if (nombre.isEmpty() || apellido.isEmpty() || cedula.isEmpty()) {
+                resultado.put("success", false);
+                resultado.put("message", "⚠️ Completa todos los campos");
+                return resultado;
+            }
+
+            double sueldoNumerico = Double.parseDouble(sueldo);
+            boolean actualizado = updateUserProfile(idUsuario, nombre, apellido, cedula, sueldoNumerico, conn);
+
+            if (actualizado) {
+                resultado.put("success", true);
+                resultado.put("message", "✅ Perfil actualizado exitosamente");
+                resultado.put("nombre", nombre);
+                resultado.put("apellido", apellido);
+                resultado.put("cedula", cedula);
+                resultado.put("sueldo", sueldoNumerico);
+            } else {
+                resultado.put("success", false);
+                resultado.put("message", "❌ Error al guardar cambios");
+            }
+        } catch (NumberFormatException e) {
+            resultado.put("success", false);
+            resultado.put("message", "❌ El sueldo debe ser un número válido");
+        } catch (Exception e) {
+            resultado.put("success", false);
+            resultado.put("message", "❌ Error: " + e.getMessage());
+        }
+        
+        return resultado;
+    }
+
+    // --- Métodos para Metas ---
+
+    public List<Meta> getMetasByUsuario(int idUsuario, Connection conn) {
+        List<Meta> metas = new ArrayList<>();
+        String sql = "SELECT * FROM metas WHERE id_cliente = ?";
+        try {
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setInt(1, idUsuario);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                metas.add(new Meta(
+                        rs.getInt("id_meta"),
+                        rs.getString("name"),
+                        rs.getDouble("target_amount"),
+                        rs.getDouble("saved_amount"),
+                        rs.getDate("deadline").toLocalDate(),
+                        rs.getString("color"),
+                        rs.getString("category"),
+                        rs.getDate("creation_date").toLocalDate()
+                ));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return metas;
+    }
+
+    public boolean addMeta(Meta meta, int idUsuario, Connection conn) {
+        String sql = "INSERT INTO metas (id_cliente, name, target_amount, saved_amount, deadline, color, category, creation_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        try {
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setInt(1, idUsuario);
+            ps.setString(2, meta.getName());
+            ps.setDouble(3, meta.getTargetAmount());
+            ps.setDouble(4, meta.getSavedAmount());
+            ps.setDate(5, java.sql.Date.valueOf(meta.getDeadline()));
+            ps.setString(6, meta.getColor());
+            ps.setString(7, meta.getCategory());
+            ps.setDate(8, java.sql.Date.valueOf(meta.getCreationDate()));
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean updateMeta(Meta meta, Connection conn) {
+        String sql = "UPDATE metas SET name = ?, target_amount = ?, saved_amount = ?, deadline = ?, color = ?, category = ? WHERE id_meta = ?";
+        try {
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setString(1, meta.getName());
+            ps.setDouble(2, meta.getTargetAmount());
+            ps.setDouble(3, meta.getSavedAmount());
+            ps.setDate(4, java.sql.Date.valueOf(meta.getDeadline()));
+            ps.setString(5, meta.getColor());
+            ps.setString(6, meta.getCategory());
+            ps.setInt(7, meta.getId());
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean deleteMeta(int idMeta, Connection conn) {
+        String sql = "DELETE FROM metas WHERE id_meta = ?";
+        try {
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setInt(1, idMeta);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }
