@@ -4,7 +4,6 @@ import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.H4;
 import com.vaadin.flow.component.icon.Icon;
-import org.apache.commons.io.input.ThrottledInputStream;
 import org.example.backend.Conexiones;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.H2;
@@ -235,7 +234,7 @@ public class PerfilUsuarioView extends VerticalLayout {
             iconMetas.getStyle().set("color", "black");
             iconMetas.getStyle().set("font-size", "24px");
 
-            H3 tituloMetas = new H3("Mis metas");
+            H3 tituloMetas = new H3("METAS");
             tituloMetas.getStyle().set("color", "black");
             tituloMetas.getStyle().set("margin", "0");
 
@@ -247,6 +246,99 @@ public class PerfilUsuarioView extends VerticalLayout {
             containerMetas.add(contentMetas);
             containerActividad.add(containerMetas);
             container.add(containerActividad);
+
+            VerticalLayout containerDashboard = new VerticalLayout();
+            containerDashboard.setWidth("100%");
+            containerDashboard.getStyle().set("background-color", "white");
+            containerDashboard.getStyle().set("border-radius", "15px");
+            containerDashboard.getStyle().set("cursor", "pointer");
+            containerDashboard.getStyle().set("transition", "background-color 0.3s");
+            containerDashboard.addClickListener(e -> UI.getCurrent().navigate("dashboard"));
+            containerDashboard.getElement().addEventListener("mouseover", e -> {
+                containerDashboard.getStyle().set("background-color", "#F0F0F0");
+            });
+            containerDashboard.getElement().addEventListener("mouseout", e -> {
+                containerDashboard.getStyle().set("background-color", "white");
+            });
+
+            Icon iconDashboard = VaadinIcon.HOME_O.create();
+            iconMetas.getStyle().set("color", "black");
+            iconMetas.getStyle().set("font-size", "24px");
+
+            H3 titleDashboard = new H3("DASHBOARD");
+            titleDashboard.getStyle().set("color", "black");
+            titleDashboard.getStyle().set("margin", "0");
+
+            HorizontalLayout contentDashboard = new HorizontalLayout(iconDashboard, titleDashboard);
+            contentDashboard.setAlignItems(Alignment.CENTER);
+            contentDashboard.setSpacing(true);
+            contentDashboard.getStyle().set("margin", "auto");
+
+            containerDashboard.add(contentDashboard);
+            containerActividad.add(containerDashboard);
+            container.add(containerDashboard);
+
+            VerticalLayout containerExpenses = new VerticalLayout();
+            containerExpenses.setWidth("100%");
+            containerExpenses.getStyle().set("background-color", "white");
+            containerExpenses.getStyle().set("border-radius", "15px");
+            containerExpenses.getStyle().set("cursor", "pointer");
+            containerExpenses.getStyle().set("transition", "background-color 0.3s");
+            containerExpenses.addClickListener(e -> UI.getCurrent().navigate("gasto"));
+            containerExpenses.getElement().addEventListener("mouseover", e -> {
+                containerExpenses.getStyle().set("background-color", "#F0F0F0");
+            });
+            containerExpenses.getElement().addEventListener("mouseout", e -> {
+                containerExpenses.getStyle().set("background-color", "white");
+            });
+
+            Icon iconExpenses = VaadinIcon.WALLET.create();
+            iconExpenses.getStyle().set("color", "black");
+            iconExpenses.getStyle().set("font-size", "24px");
+
+            H3 titleExpense = new H3("GASTOS");
+            titleExpense.getStyle().set("color", "black");
+            titleExpense.getStyle().set("margin", "0");
+
+            HorizontalLayout contentExpenses = new HorizontalLayout(iconExpenses, titleExpense);
+            contentExpenses.setAlignItems(Alignment.CENTER);
+            contentExpenses.setSpacing(true);
+            contentExpenses.getStyle().set("margin", "auto");
+
+            containerExpenses.add(contentExpenses);
+            containerActividad.add(containerExpenses);
+            container.add(containerExpenses);
+
+            VerticalLayout containerIncome = new VerticalLayout();
+            containerIncome.setWidth("100%");
+            containerIncome.getStyle().set("background-color", "white");
+            containerIncome.getStyle().set("border-radius", "15px");
+            containerIncome.getStyle().set("cursor", "pointer");
+            containerIncome.getStyle().set("transition", "background-color 0.3s");
+            containerIncome.addClickListener(e -> UI.getCurrent().navigate("ingreso"));
+            containerIncome.getElement().addEventListener("mouseover", e -> {
+                containerIncome.getStyle().set("background-color", "#F0F0F0");
+            });
+            containerIncome.getElement().addEventListener("mouseout", e -> {
+                containerIncome.getStyle().set("background-color", "white");
+            });
+
+            Icon iconIncome = VaadinIcon.MONEY.create();
+            iconMetas.getStyle().set("color", "black");
+            iconMetas.getStyle().set("font-size", "24px");
+
+            H3 titleIncome = new H3("INGRESOS");
+            titleIncome.getStyle().set("color", "black");
+            titleIncome.getStyle().set("margin", "0");
+
+            HorizontalLayout contentIncomes = new HorizontalLayout(iconIncome, titleIncome);
+            contentIncomes.setAlignItems(Alignment.CENTER);
+            contentIncomes.setSpacing(true);
+            contentIncomes.getStyle().set("margin", "auto");
+
+            containerIncome.add(contentIncomes);
+            containerActividad.add(containerIncome);
+            container.add(containerIncome);
 
             this.add(container);
 
