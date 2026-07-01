@@ -69,7 +69,7 @@ public class Conexiones {
     }
 
     public void registerUser(Connection conn, String name, String apellido, String correo, String password, double sueldo, String cedula){
-        String sql = "INSERT INTO usuarios (nombre, apellido, correo, contrasena, sueldo, cedula) VALUES (?,?,?,?,?,?,?)";
+        String sql = "INSERT INTO usuarios (nombre, apellido, correo, contrasena, sueldo, cedula) VALUES (?,?,?,?,?,?)";
 
         try {
             PreparedStatement data = conn.prepareStatement(sql);
