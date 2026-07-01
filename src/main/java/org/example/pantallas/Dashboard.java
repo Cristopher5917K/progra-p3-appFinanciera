@@ -85,7 +85,7 @@ public class Dashboard extends VerticalLayout {
         VerticalLayout headerInfo = new VerticalLayout();
         headerInfo.setWidthFull();
         headerInfo.getStyle().set("border-radius", "0 0  12px 12px");
-        headerInfo.getStyle().set("background-color", "#1A365D");
+        headerInfo.getStyle().set("background", "linear-gradient(160deg, #0D2B55 0%, #1a4a8a 100%)");
 
         Span dateText = new Span(formato);
         dateText.getStyle().set("color", "#FFFFFF");
