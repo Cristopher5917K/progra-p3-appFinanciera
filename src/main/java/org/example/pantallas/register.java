@@ -1,9 +1,8 @@
-package org.example;
+package org.example.pantallas;
 
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.H1;
-import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.H4;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.textfield.TextField;
@@ -71,6 +70,16 @@ public class register extends VerticalLayout{
 
         btnbacklogin.addClickListener(event -> {
             getUI().ifPresent(ui -> ui.navigate("login"));
+        });
+
+        btnregister.addClickListener(event -> {
+            String cedula = txtfid.getValue();
+            String nombre = txtfname.getValue();
+            String apellido = txtflastname.getValue();
+            String correo = txtfmail.getValue();
+            String contrasena = txtfpassword.getValue();
+
+            //pongang el metodo para registrar usuarios (gays)
         });
 
     }

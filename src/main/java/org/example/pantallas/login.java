@@ -1,14 +1,11 @@
-package org.example;
+package org.example.pantallas;
 
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.*;
-import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.Route;
-import com.vaadin.flow.component.icon.Icon;
-import com.vaadin.flow.component.icon.VaadinIcon;
 
 import javax.swing.*;
 
@@ -90,6 +87,18 @@ public class login extends VerticalLayout {
 
 
         this.add(seccionSuperior, lbllogin, lblunderlogin, lblmail, txtflogin, lblpassword, txtfpassword, btlogin, btsigin, lbltambien, btadmin_panel);
+
+        btlogin.addClickListener(event -> {
+            String correo = txtflogin.getValue();
+            String contrasena = txtfpassword.getValue();
+
+            //Ingresen el metodo de la base de datos y manden los vallores
+
+            if(txtflogin.isEmpty() || txtfpassword.isEmpty()){
+                getUI().ifPresent(ui -> ui.navigate("noUser"));
+            }
+
+        });
 
         btsigin.addClickListener(event -> {
             getUI().ifPresent(ui -> ui.navigate("register"));
