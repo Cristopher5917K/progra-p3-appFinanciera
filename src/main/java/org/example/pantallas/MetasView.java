@@ -1,5 +1,7 @@
 package org.example.pantallas;
 
+import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.datepicker.DatePicker;
@@ -67,8 +69,12 @@ public class MetasView extends VerticalLayout {
     }
 
     private void createUI() {
-        getStyle().set("background", "#F0F4FF");
-        setSizeFull();
+        setSizeUndefined();
+        setWidthFull();
+        setWidth("390px");
+        getStyle().set("background-color", "#F8F9FA");
+        getStyle().set("margin", "0 auto");
+        getStyle().set("padding-bottom", "60px");
         setPadding(false);
         setSpacing(false);
 
@@ -78,7 +84,7 @@ public class MetasView extends VerticalLayout {
         header.getStyle().set("padding-bottom", "16px");
         header.setWidthFull();
         header.setPadding(false);
-        header.setSpacing(false);
+        header.setSpacing(true);
 
         H1 title = new H1("Mis Metas");
         title.getStyle().set("color", "white");
@@ -109,7 +115,7 @@ public class MetasView extends VerticalLayout {
         // FAB
         Button fab = new Button(new Icon(VaadinIcon.PLUS));
         fab.getStyle().set("position", "fixed");
-        fab.getStyle().set("bottom", "20px");
+        fab.getStyle().set("bottom", "80px");
         fab.getStyle().set("right", "20px");
         fab.getStyle().set("width", "56px");
         fab.getStyle().set("height", "56px");
@@ -119,7 +125,7 @@ public class MetasView extends VerticalLayout {
         fab.getStyle().set("box-shadow", "0 8px 24px rgba(39,174,96,0.45)");
         fab.addClickListener(e -> openAddGoalDialog());
 
-        add(header, filterLayout, goalsContainer, fab);
+        add(header, filterLayout, goalsContainer, fab, navigationBar());
         loadAndRefresh();
     }
 
@@ -341,5 +347,50 @@ public class MetasView extends VerticalLayout {
 
         dialog.getFooter().add(cancelButton, deleteButton);
         dialog.open();
+    }
+
+    private Component navigationBar(){
+        HorizontalLayout icons = new HorizontalLayout();
+        icons.setHeight("60px");
+        icons.getStyle().set("position", "fixed");
+        icons.getStyle().set("bottom", "0");
+        icons.getStyle().set("left", "50%");
+        icons.getStyle().set("transform", "translateX(-50%)");
+        icons.getStyle().set("width", "100%");
+        icons.getStyle().set("max-width", "390px");
+
+        icons.getStyle().set("background-color", "var(--lumo-base-color)");
+        icons.getStyle().set("border-top", "1px solid var(--lumo-contrast-10pct)");
+        icons.getStyle().set("z-index", "100");
+
+        icons.setJustifyContentMode(JustifyContentMode.EVENLY);
+        icons.setVerticalComponentAlignment(Alignment.CENTER);
+
+        Icon home = VaadinIcon.HOME_O.create();
+
+        Icon expenses = VaadinIcon.WALLET.create();
+
+        Icon incomes = VaadinIcon.MONEY.create();
+
+        Icon goals = VaadinIcon.BULLSEYE.create();
+
+        Icon user = VaadinIcon.USER.create();
+
+
+        Icon[] icon = {home, expenses, incomes, goals, user};
+        for(Icon image : icon){
+            image.setColor("#A0AEC0");
+            image.setSize("24px");
+            image.getStyle().set("cursor", "pointer");
+        }
+
+        goals.setColor("#28a745");
+        home.addClickListener(e -> UI.getCurrent().navigate("dashboard"));
+        incomes.addClickListener(e -> UI.getCurrent().navigate("ingreso"));
+        expenses.addClickListener(e -> UI.getCurrent().navigate("gasto"));
+        user.addClickListener(e -> UI.getCurrent().navigate("perfil"));
+
+        icons.add(home, expenses, incomes, goals, user);
+        return icons;
     }
 }

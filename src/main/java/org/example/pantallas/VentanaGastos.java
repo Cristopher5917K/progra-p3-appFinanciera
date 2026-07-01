@@ -1,5 +1,6 @@
 package org.example.pantallas;
 
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
@@ -9,34 +10,62 @@ import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.progressbar.ProgressBar;
 import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.VaadinSession;
+import org.example.backend.Conexiones;
+import org.example.info.Cliente;
 
+import java.sql.Connection;
+import java.sql.Date;
+import java.sql.SQLException;
 import java.time.LocalDate;
 
 @Route("gasto")
 public class VentanaGastos extends VerticalLayout {
-
+    Connection conn = null;
     public VentanaGastos() {
+        Cliente user = VaadinSession.getCurrent().getAttribute(Cliente.class);
+        Conexiones database = new Conexiones();
+
+        try {
+            conn = database.getConnection();
+        } catch (SQLException e){
+            e.printStackTrace();
+        }
+
+
+        if (user == null){
+            UI.getCurrent().navigate("login");
+            return;
+        }
         // 1. Configuración del fondo general de la aplicación
-        setSizeFull();
         setAlignItems(Alignment.CENTER);
-        getStyle().set("background-color", "#F4F6FB"); // Fondo azul muy claro similar al Figma
+        setSizeUndefined();
+        setWidthFull();
+        setWidth("390px");
+        getStyle().set("background-color", "#F8F9FA");
+        getStyle().set("margin", "0 auto");
+        getStyle().set("padding-bottom", "60px"); // Fondo azul muy claro similar al Figma
 
         // 2. Contenedor principal (Simulando el ancho de un celular)
         VerticalLayout mainContainer = new VerticalLayout();
-        mainContainer.setMaxWidth("450px");
+        mainContainer.setMaxWidth("390px");
         mainContainer.setPadding(false);
         mainContainer.setSpacing(true);
 
         // --- CONSTRUCCIÓN DE LAS SECCIONES ---
 
         HorizontalLayout header = crearHeader();
-        Div budgetCard = crearTarjetaPresupuesto();
+        double salary = user.getInitialSalary();
+        double expenses = database.sumarGastosDelMes(user.getIdCliente(), conn);
+        Div budgetCard = crearTarjetaPresupuesto(salary, expenses);
 
         // Campo: Monto del Gasto
         NumberField amountField = new NumberField("MONTO DEL GASTO");
@@ -72,6 +101,30 @@ public class VentanaGastos extends VerticalLayout {
         saveButton.getStyle().set("border-radius", "15px");
         saveButton.getStyle().set("padding", "25px");
         saveButton.getStyle().set("margin-top", "10px");
+        saveButton.addClickListener(e -> {
+            // 1. Validar que los campos obligatorios no estén vacíos
+            if (amountField.getValue() != null && amountField.getValue() > 0
+                    && categoryBox.getValue() != null
+                    && datePicker.getValue() != null) {
+
+                try {
+                    // Convertir la fecha de Vaadin a SQL
+                    Date sqlDate = Date.valueOf(datePicker.getValue());
+                    String categoria = categoryBox.getValue();
+                    double monto = amountField.getValue();
+
+                    database.insertarMovimiento(conn, user.getIdCliente(),"GASTO", categoria.toUpperCase(), "UNICO", monto, sqlDate);
+                    UI.getCurrent().navigate("dashboard");
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                    Notification.show("Error de conexión a la base de datos.", 3000, Notification.Position.MIDDLE)
+                            .addThemeVariants(NotificationVariant.LUMO_ERROR);
+                }
+            } else {
+                Notification.show("Por favor, completa el monto, la categoría y la fecha.", 3000, Notification.Position.MIDDLE)
+                        .addThemeVariants(NotificationVariant.LUMO_WARNING);
+            }
+        });
 
         // 3. Agregar todo al contenedor principal y luego a la vista
         mainContainer.add(header, budgetCard, amountField, categoryBox, datePicker, descriptionArea, saveButton);
@@ -84,6 +137,7 @@ public class VentanaGastos extends VerticalLayout {
         Button backButton = new Button(new Icon(VaadinIcon.ANGLE_LEFT));
         backButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         backButton.getStyle().set("background-color", "white").set("border-radius", "50%");
+        backButton.addClickListener(e -> UI.getCurrent().navigate("dashboard"));
 
         H3 title = new H3("Nuevo Gasto");
         title.getStyle().set("margin", "0").set("color", "#1A2035");
@@ -107,10 +161,10 @@ public class VentanaGastos extends VerticalLayout {
         return header;
     }
 
-    private Div crearTarjetaPresupuesto() {
+    private Div crearTarjetaPresupuesto(double presupuestoMaximo, double gastado) {
         Div card = new Div();
         aplicarEstiloTarjeta(card);
-        card.getStyle().set("background-color", "#FFF8F2"); // Fondo naranja pastel
+        card.getStyle().set("background-color", "#FFF8F2");
         card.getStyle().set("border", "1px solid #FFE4CD");
 
         Icon alertIcon = new Icon(VaadinIcon.WARNING);
@@ -122,12 +176,24 @@ public class VentanaGastos extends VerticalLayout {
         HorizontalLayout titleLayout = new HorizontalLayout(alertIcon, alertTitle);
         titleLayout.setAlignItems(Alignment.CENTER);
 
-        Span alertText = new Span("Te quedan $1,352.00 de tu presupuesto de $3,500.00");
+        // Cálculos matemáticos reales
+        double restante = presupuestoMaximo - gastado;
+        if (restante < 0) restante = 0; // Evitar que muestre números negativos si se pasó
+
+        Span alertText = new Span("Te quedan $" + String.format("%.2f", restante) + " de tu presupuesto de $" + String.format("%.2f", presupuestoMaximo));
         alertText.getStyle().set("font-size", "14px").set("color", "#555").set("display", "block").set("margin-top", "5px");
 
-        // Barra de progreso (Max: 3500, Valor actual: Lo ya gastado 2148)
-        ProgressBar progressBar = new ProgressBar(0, 3500, 2148);
+        // Configuración de la barra de progreso
+        double topeBarra = gastado > presupuestoMaximo ? presupuestoMaximo : gastado;
+        ProgressBar progressBar = new ProgressBar(0, presupuestoMaximo, topeBarra);
         progressBar.getStyle().set("margin-top", "10px");
+
+        // Cambiar color si ya se pasó del límite
+        if (gastado >= presupuestoMaximo) {
+            progressBar.getStyle().set("--lumo-primary-color", "#ED2100"); // Rojo
+        } else if (gastado >= presupuestoMaximo * 0.8) {
+            progressBar.getStyle().set("--lumo-primary-color", "#F5A623"); // Naranja
+        }
 
         card.add(titleLayout, alertText, progressBar);
         return card;

@@ -1,5 +1,6 @@
 package org.example.pantallas;
 
+import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
@@ -11,33 +12,24 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.Scroller;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import com.vaadin.flow.component.dialog.Dialog;
 import org.example.backend.Conexiones;
 import org.example.info.Cliente;
 
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
 @Route("dashboard")
 public class Dashboard extends VerticalLayout {
     public Dashboard(){
-        Conexiones database = new Conexiones();
-        Connection conn = null;
-        Cliente user = null;
-        
-        try {
-            conn = database.getConnection();
-            user = database.userInfoByIdFromUsuarios(1, conn);
-            conn = Conexiones.getConnection();
-            user = database.userInfoById(1, conn);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        Cliente user = VaadinSession.getCurrent().getAttribute(Cliente.class);
 
         if (user == null) {
-            add(new Span("Error: Usuario no encontrado o error de conexión"));
+            UI.getCurrent().navigate("login");
             return;
         }
 
@@ -50,6 +42,10 @@ public class Dashboard extends VerticalLayout {
         //setHeight("100vh");
         setPadding(false);
         setSpacing(false);
+
+        if (user.getInitialSalary() <= 0){
+            actualizarSueldo(user);
+        }
 
         VerticalLayout mainContainer = new VerticalLayout();
         mainContainer.setPadding(true);
@@ -68,13 +64,6 @@ public class Dashboard extends VerticalLayout {
                 navigationBar()
         );
 
-        if (conn != null) {
-            try {
-                conn.close();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
     }
 
     private Component headerUser(Cliente user){
@@ -328,7 +317,10 @@ public class Dashboard extends VerticalLayout {
         }
 
         home.setColor("#28a745");
-        incomes.addClickListener(e -> UI.getCurrent().navigate("gastos"));
+        goals.addClickListener(e -> UI.getCurrent().navigate("metas"));
+        incomes.addClickListener(e -> UI.getCurrent().navigate("ingreso"));
+        expenses.addClickListener(e -> UI.getCurrent().navigate("gasto"));
+        user.addClickListener(e -> UI.getCurrent().navigate("perfil"));
 
         icons.add(home, expenses, incomes, goals, user);
         return icons;
@@ -435,6 +427,54 @@ public class Dashboard extends VerticalLayout {
         ventana.getFooter().add(btnCerrar);
 
         ventana.open();
+    }
+
+    private void actualizarSueldo(Cliente user) {
+        Dialog ventanaSueldo = new Dialog();
+        ventanaSueldo.setHeaderTitle("¡Bienvenido! Configura tu cuenta");
+        ventanaSueldo.setCloseOnEsc(false);
+        ventanaSueldo.setCloseOnOutsideClick(false); // Obliga a que ingresen un dato
+
+        VerticalLayout layout = new VerticalLayout();
+        Span mensaje = new Span("Para darte mejores recomendaciones, ingresa tu sueldo mensual actual:");
+        mensaje.getStyle().set("font-size", "0.9rem");
+
+        NumberField sueldoField = new NumberField("Sueldo Inicial");
+        sueldoField.setPlaceholder("0.00");
+        sueldoField.setWidthFull();
+
+        Button btnGuardar = new Button("Guardar y Empezar", event -> {
+            if (sueldoField.getValue() != null && sueldoField.getValue() > 0) {
+
+                // 1. Actualizar el sueldo en la base de datos usando un método UPDATE
+                Conexiones db = new Conexiones();
+                Connection conn = null;
+                try {
+                    conn = db.getConnection();
+                    db.updateSalary(user.getIdCliente(), sueldoField.getValue(), conn);
+                } catch (SQLException e){
+                    e.printStackTrace();
+                }
+
+
+                user.setInitialSalary(sueldoField.getValue());
+
+                UI.getCurrent().getPage().reload();
+
+                ventanaSueldo.close();
+            } else {
+                sueldoField.setErrorMessage("Ingresa un valor válido");
+                sueldoField.setInvalid(true);
+            }
+        });
+
+        btnGuardar.getStyle().set("background-color", "#28a745");
+        btnGuardar.getStyle().set("color", "white");
+        btnGuardar.setWidthFull();
+
+        layout.add(mensaje, sueldoField, btnGuardar);
+        ventanaSueldo.add(layout);
+        ventanaSueldo.open();
     }
 
 }

@@ -1,5 +1,6 @@
 package org.example.backend;
 
+import com.nimbusds.jose.shaded.gson.internal.NonNullElementWrapperList;
 import io.github.cdimascio.dotenv.Dotenv;
 import org.example.info.Cliente;
 import org.example.info.Meta;
@@ -41,7 +42,7 @@ public class Conexiones {
         return connection;
     }
 
-    public void registerUser(Connection conn, String name, String apellido, String cedula, double sueldo, String password){
+    public void registerClient(Connection conn, String name, String apellido, String cedula, double sueldo, String password){
         String addUser = "INSERT INTO cliente (name_cliente, apellido_cliente, password, cedula, initial_salary) VALUES (?,?,?,?,?)";
 
         if (conn != null){
@@ -69,12 +70,36 @@ public class Conexiones {
         }
     }
 
-    public Cliente userInfo(String cedula, Connection conn){
-        String sqlSearch = "SELECT * FROM cliente WHERE cedula = ?";
+    public void registerUser(Connection conn, String name, String apellido, String correo, String password, double sueldo, String cedula){
+        String sql = "INSERT INTO usuarios (nombre, apellido, correo, contrasena, sueldo, cedula) VALUES (?,?,?,?,?,?,?)";
+
+        try {
+            PreparedStatement data = conn.prepareStatement(sql);
+            data.setString(1, name);
+            data.setString(2, apellido);
+            data.setString(3, correo);
+            data.setString(4, password);
+            data.setDouble(5, sueldo);
+            data.setString(6, cedula);
+
+            int value = data.executeUpdate();
+            if (value > 0){
+                System.out.println("SE INSERTO EL USUARIO");
+            } else {
+                System.out.println("NO SE INSERTO EL USUARIO");
+            }
+        } catch (Exception e){
+            e.printStackTrace();
+            System.out.println("ERROR EN LA BASE DE DATOS");
+        }
+    }
+
+    public Cliente userLogin(String correo, String password, Connection conn){
+        String sqlSearch = "SELECT * FROM cliente WHERE password = ?";
 
         try {
             PreparedStatement search = conn.prepareStatement(sqlSearch);
-            search.setString(1, cedula);
+            search.setString(1, password);
 
             ResultSet success = search.executeQuery();
             if (success.next()){
@@ -87,7 +112,7 @@ public class Conexiones {
                         success.getDouble("initial_salary")
                 );
             } else {
-                JOptionPane.showMessageDialog(null, "NO SE GUARDO AL USUARIO");
+                JOptionPane.showMessageDialog(null, "NO SE ENCONTRO AL USUARIO");
             }
         } catch (Exception e){
             e.printStackTrace();
@@ -186,6 +211,25 @@ public class Conexiones {
         }
     }
 
+    public double sumarGastosDelMes(int clienteId, Connection conn) {
+        // Usamos YEAR(fecha) y MONTH(fecha) para filtrar el mes actual directamente en SQL
+        String sql = "SELECT SUM(monto) AS total_gastos FROM movimiento " +
+                "WHERE cliente = ? AND tipo_movimiento = 'GASTO' " +
+                "AND YEAR(fecha) = YEAR(CURDATE()) AND MONTH(fecha) = MONTH(CURDATE())";
+
+        try (PreparedStatement data = conn.prepareStatement(sql)) {
+            data.setInt(1, clienteId);
+            ResultSet rs = data.executeQuery();
+
+            if (rs.next()) {
+                return rs.getDouble("total_gastos"); // Devuelve la suma calculada por SQL
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0.0; // Si no hay gastos, devuelve 0
+    }
+
     public List<Movimientos> movements(String tipo, Connection conn){
         String sql = "SELECT * FROM movimiento WHERE tipo_movimiento = ?";
 
@@ -275,6 +319,26 @@ public class Conexiones {
             e.printStackTrace();
         }
         return false;
+    }
+
+    public void updateSalary(int idCliente, double salary, Connection conn){
+        String update = "UPDATE cliente SET initial_salary = ? WHERE id_cliente = ?";
+
+        try {
+            PreparedStatement newData = conn.prepareStatement(update);
+            newData.setInt(1, idCliente);
+            newData.setDouble(2, salary);
+
+            int value = newData.executeUpdate();
+            if (value > 0){
+                System.out.println("SE ACTUALIZO EL SALARIO");
+            } else {
+                System.out.println("NO SE ACTUALIZO EL SALARIO");
+            }
+        } catch (Exception e){
+
+        }
+
     }
 
     public Map<String, Object> guardarCambiosUsuario(int idUsuario, String nombre, String apellido, String cedula, String sueldo, Connection conn) {
