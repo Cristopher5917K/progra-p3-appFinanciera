@@ -18,7 +18,7 @@ import com.vaadin.flow.router.Route;
 
 import java.time.LocalDate;
 
-@Route("nuevo_gasto")
+@Route("gasto")
 public class VentanaGastos extends VerticalLayout {
 
     public VentanaGastos() {

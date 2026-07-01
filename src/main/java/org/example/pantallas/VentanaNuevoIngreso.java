@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-@Route("gastos")
+@Route("ingreso")
 public class VentanaNuevoIngreso extends VerticalLayout {
     private final List<VerticalLayout> category = new ArrayList<>();
     private final List<HorizontalLayout> timeSpam = new ArrayList<>();
