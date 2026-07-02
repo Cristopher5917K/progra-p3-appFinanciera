@@ -11,7 +11,9 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.VaadinSession;
 import org.example.backend.Conexiones;
+import org.example.info.Cliente;
 
 import java.sql.Connection;
 import java.sql.Date;
@@ -30,12 +32,14 @@ public class VentanaNuevoIngreso extends VerticalLayout {
     private String frecuencia = "MENSUAL";
 
     public VentanaNuevoIngreso(){
-        setSizeUndefined();
-        setWidthFull();
-        setWidth("390px");
+        Cliente user = VaadinSession.getCurrent().getAttribute(Cliente.class);
+        this.setSizeFull();
+        this.setAlignItems(Alignment.CENTER);
+        this.setPadding(false);
+        this.setSpacing(false);
+        this.getStyle().set("background-color", "#F8F9FA");
         getStyle().set("margin", "0 auto");
         getStyle().set("padding-bottom", "68px");
-        getStyle().set("background-color", "#F8F9FA");
         setSpacing(false);
         setPadding(false);
 
@@ -47,7 +51,7 @@ public class VentanaNuevoIngreso extends VerticalLayout {
                 categoryCards(),
                 frequencyCard(),
                 crearSeccionFecha(),
-                save()
+                save(user.getIdCliente())
         );
 
         add(
@@ -223,7 +227,7 @@ public class VentanaNuevoIngreso extends VerticalLayout {
         return frequencyContainer;
     }
 
-    private Component save(){
+    private Component save(int id){
         VerticalLayout container = new VerticalLayout();
         container.setWidthFull();
         container.setSpacing(true);
@@ -243,17 +247,13 @@ public class VentanaNuevoIngreso extends VerticalLayout {
         message.getStyle().set("font-weight", "bold");
 
         container.addClickListener(e ->{
-            if (amount.getValue() > 0 && amount.getValue() != null){
+            if (amount.getValue() != null && amount.getValue() > 0){
                 Conexiones database = new Conexiones();
                 try {
                     Connection conn = database.getConnection();
                     if (conn != null){
-                        Integer idUsuario = (Integer) com.vaadin.flow.server.VaadinSession.getCurrent().getAttribute("usuarioId");
-                        if (idUsuario == null) {
-                            idUsuario = 1;
-                        }
                         Date dateIncome = Date.valueOf(date.getValue());
-                        database.insertarMovimiento(conn, idUsuario, "INGRESO", categoria, frecuencia, amount.getValue(), dateIncome);
+                        database.insertarMovimiento(conn, id, "INGRESO", categoria, frecuencia, amount.getValue(), dateIncome);
                         UI.getCurrent().navigate("dashboard");
                     }
                 } catch (Exception ex) {

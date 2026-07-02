@@ -1,5 +1,6 @@
 package org.example.pantallas;
 
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.H1;
@@ -90,6 +91,7 @@ public class Register extends VerticalLayout{
                 conn = database.getConnection();
                 database.registerUser(conn, nombre, apellido, correo, contrasena,0.0 , cedula);
                 database.registerClient(conn, nombre, apellido, cedula, 0.0, contrasena);
+                UI.getCurrent().navigate("login");
             } catch (SQLException e){
                 e.printStackTrace();
                 System.out.println("ERROR AL REGISTRAR");

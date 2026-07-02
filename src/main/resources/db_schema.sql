@@ -1,11 +1,11 @@
 -- Elimina las tablas si existen para un inicio limpio
-DROP TABLE IF EXISTS metas;
-DROP TABLE IF EXISTS movimiento;
-DROP TABLE IF EXISTS cliente;
-DROP TABLE IF EXISTS usuarios;
+-- DROP TABLE IF EXISTS metas;
+-- DROP TABLE IF EXISTS movimiento;
+-- DROP TABLE IF EXISTS cliente;
+-- DROP TABLE IF EXISTS usuarios;
 
 -- 1. TABLA: usuarios (Información de Login/Perfil)
-CREATE TABLE usuarios (
+CREATE TABLE IF NOT EXISTS usuarios (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(50) NOT NULL,
     apellido VARCHAR(50) NOT NULL,
@@ -17,7 +17,7 @@ CREATE TABLE usuarios (
 );
 
 -- 2. TABLA: cliente (Información del Dashboard)
-CREATE TABLE cliente (
+CREATE TABLE IF NOT EXISTS cliente (
     id_cliente INT AUTO_INCREMENT PRIMARY KEY,
     name_cliente VARCHAR(50) NOT NULL,
     apellido_cliente VARCHAR(50) NOT NULL,
@@ -28,7 +28,7 @@ CREATE TABLE cliente (
 );
 
 -- 3. TABLA: movimiento (Transacciones/Movimientos)
-CREATE TABLE movimiento (
+CREATE TABLE IF NOT EXISTS movimiento (
     id_movimiento INT AUTO_INCREMENT PRIMARY KEY,
     cliente INT NOT NULL,
     tipo_movimiento VARCHAR(50) NOT NULL,
@@ -41,7 +41,7 @@ CREATE TABLE movimiento (
 );
 
 -- 4. TABLA: metas (Metas de Ahorro)
-CREATE TABLE metas (
+CREATE TABLE IF NOT EXISTS metas (
     id_meta INT AUTO_INCREMENT PRIMARY KEY,
     id_cliente INT NOT NULL,
     name VARCHAR(255) NOT NULL,
@@ -55,5 +55,5 @@ CREATE TABLE metas (
 );
 
 -- ÍNDICES PARA OPTIMIZACIÓN
-CREATE INDEX idx_cliente_movimiento ON movimiento(cliente);
-CREATE INDEX idx_cliente_meta ON metas(id_cliente);
+-- CREATE INDEX idx_cliente_movimiento ON movimiento(cliente);
+-- CREATE INDEX idx_cliente_meta ON metas(id_cliente);
