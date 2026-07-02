@@ -240,6 +240,7 @@ public class PerfilUsuarioView extends VerticalLayout {
 
             HorizontalLayout contentMetas = new HorizontalLayout(iconMetas, tituloMetas);
             contentMetas.setAlignItems(Alignment.CENTER);
+            contentMetas.setJustifyContentMode(JustifyContentMode.EVENLY);
             contentMetas.setSpacing(true);
             contentMetas.getStyle().set("margin", "auto");
 
@@ -271,6 +272,7 @@ public class PerfilUsuarioView extends VerticalLayout {
 
             HorizontalLayout contentDashboard = new HorizontalLayout(iconDashboard, titleDashboard);
             contentDashboard.setAlignItems(Alignment.CENTER);
+            contentDashboard.setJustifyContentMode(JustifyContentMode.EVENLY);
             contentDashboard.setSpacing(true);
             contentDashboard.getStyle().set("margin", "auto");
 
@@ -302,6 +304,7 @@ public class PerfilUsuarioView extends VerticalLayout {
 
             HorizontalLayout contentExpenses = new HorizontalLayout(iconExpenses, titleExpense);
             contentExpenses.setAlignItems(Alignment.CENTER);
+            contentExpenses.setJustifyContentMode(JustifyContentMode.EVENLY);
             contentExpenses.setSpacing(true);
             contentExpenses.getStyle().set("margin", "auto");
 
@@ -333,6 +336,7 @@ public class PerfilUsuarioView extends VerticalLayout {
 
             HorizontalLayout contentIncomes = new HorizontalLayout(iconIncome, titleIncome);
             contentIncomes.setAlignItems(Alignment.CENTER);
+            contentIncomes.setJustifyContentMode(JustifyContentMode.EVENLY);
             contentIncomes.setSpacing(true);
             contentIncomes.getStyle().set("margin", "auto");
 

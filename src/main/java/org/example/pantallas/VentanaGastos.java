@@ -46,11 +46,11 @@ public class VentanaGastos extends VerticalLayout {
             return;
         }
         // 1. Configuración del fondo general de la aplicación
-        setAlignItems(Alignment.CENTER);
-        setSizeUndefined();
-        setWidthFull();
-        setWidth("390px");
-        getStyle().set("background-color", "#F8F9FA");
+        this.setWidthFull();
+        this.setAlignItems(Alignment.CENTER);
+        this.setPadding(false);
+        this.setSpacing(false);
+        this.getStyle().set("background-color", "#F8F9FA");
         getStyle().set("margin", "0 auto");
         getStyle().set("padding-bottom", "60px"); // Fondo azul muy claro similar al Figma
 
@@ -103,10 +103,7 @@ public class VentanaGastos extends VerticalLayout {
         saveButton.getStyle().set("margin-top", "10px");
         saveButton.addClickListener(e -> {
             // 1. Validar que los campos obligatorios no estén vacíos
-            if (amountField.getValue() != null && amountField.getValue() > 0
-                    && categoryBox.getValue() != null
-                    && datePicker.getValue() != null) {
-
+            if (amountField.getValue() != null && amountField.getValue() > 0 && categoryBox.getValue() != null && datePicker.getValue() != null) {
                 try {
                     // Convertir la fecha de Vaadin a SQL
                     Date sqlDate = Date.valueOf(datePicker.getValue());

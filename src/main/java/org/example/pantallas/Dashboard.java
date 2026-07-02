@@ -33,10 +33,11 @@ public class Dashboard extends VerticalLayout {
             return;
         }
 
-        setSizeUndefined();
-        setWidthFull();
-        setWidth("390px");
-        getStyle().set("background-color", "#F8F9FA");
+        this.setWidthFull();
+        this.setAlignItems(Alignment.CENTER);
+        this.setPadding(false);
+        this.setSpacing(false);
+        this.getStyle().set("background-color", "#F8F9FA");
         getStyle().set("margin", "0 auto");
         getStyle().set("padding-bottom", "60px");
         //setHeight("100vh");
@@ -45,6 +46,7 @@ public class Dashboard extends VerticalLayout {
 
         if (user.getInitialSalary() <= 0){
             actualizarSueldo(user);
+
         }
 
         VerticalLayout mainContainer = new VerticalLayout();
@@ -283,6 +285,7 @@ public class Dashboard extends VerticalLayout {
 
     private Component navigationBar(){
         HorizontalLayout icons = new HorizontalLayout();
+        icons.setWidthFull();
         icons.setHeight("60px");
         icons.getStyle().set("position", "fixed");
         icons.getStyle().set("bottom", "0");
@@ -452,6 +455,7 @@ public class Dashboard extends VerticalLayout {
                 try {
                     conn = db.getConnection();
                     db.updateSalary(user.getIdCliente(), sueldoField.getValue(), conn);
+                    db.updateSalaryUSer(user.getIdCliente(), sueldoField.getValue(), conn);
                 } catch (SQLException e){
                     e.printStackTrace();
                 }

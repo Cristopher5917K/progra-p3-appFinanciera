@@ -323,8 +323,8 @@ public class Conexiones {
 
         try {
             PreparedStatement newData = conn.prepareStatement(update);
-            newData.setInt(1, idCliente);
-            newData.setDouble(2, salary);
+            newData.setDouble(1, salary);
+            newData.setInt(2, idCliente);
 
             int value = newData.executeUpdate();
             if (value > 0){
@@ -333,9 +333,27 @@ public class Conexiones {
                 System.out.println("NO SE ACTUALIZO EL SALARIO");
             }
         } catch (Exception e){
-
+            e.printStackTrace();
         }
+    }
 
+    public void updateSalaryUSer(int idCliente, double salary, Connection conn){
+        String update = "UPDATE usuarios SET sueldo = ? WHERE id = ?";
+
+        try {
+            PreparedStatement newData = conn.prepareStatement(update);
+            newData.setDouble(1, salary);
+            newData.setInt(2, idCliente);
+
+            int value = newData.executeUpdate();
+            if (value > 0){
+                System.out.println("SE ACTUALIZO EL SALARIO");
+            } else {
+                System.out.println("NO SE ACTUALIZO EL SALARIO");
+            }
+        } catch (Exception e){
+            e.printStackTrace();
+        }
     }
 
     public Map<String, Object> guardarCambiosUsuario(int idUsuario, String nombre, String apellido, String cedula, String sueldo, Connection conn) {
