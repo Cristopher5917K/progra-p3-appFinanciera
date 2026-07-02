@@ -22,7 +22,6 @@ public class Register extends VerticalLayout{
         this.setSizeFull();
         this.setAlignItems(Alignment.CENTER);
 
-
         VerticalLayout seccionSuperior = new VerticalLayout();
         seccionSuperior.setWidthFull();
         seccionSuperior.setHeight("45vh");

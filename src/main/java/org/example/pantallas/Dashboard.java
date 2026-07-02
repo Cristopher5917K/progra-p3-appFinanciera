@@ -18,6 +18,7 @@ import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import com.vaadin.flow.component.dialog.Dialog;
 import org.example.backend.Conexiones;
+import org.example.backend.DataStructures;
 import org.example.info.Cliente;
 import org.example.info.Movimientos;
 
@@ -72,9 +73,9 @@ public class Dashboard extends VerticalLayout implements BeforeEnterObserver {
         mainContainer.setPadding(true);
         mainContainer.setSpacing(true);
         mainContainer.add(
-                generateScroll(),
+                generateScroll(user, movements),
                 generatePercentage(user.getInitialSalary(), 1800),
-                recommendationsCards(user.getInitialSalary(),900),
+                recommendationsCards(user.getInitialSalary(),database.sumarGastosDelMes(user.getIdCliente(), conn)),
                 crearTarjetasMovimientos()
         );
 
@@ -110,9 +111,12 @@ public class Dashboard extends VerticalLayout implements BeforeEnterObserver {
         return headerInfo;
     }
 
-    private Component generateScroll(){
-        VerticalLayout savings = dynamicCard("MONTO AHORRO", "$24850","#4ade80" ,VaadinIcon.WALLET);
+    private Component generateScroll(Cliente user, List<Movimientos> movements){
+        VerticalLayout savings = dynamicCard("MONTO AHORRO", String.valueOf(user.getInitialSalary()),"#4ade80" ,VaadinIcon.WALLET);
         VerticalLayout graphic = dynamicCard("GRAFICO AHORRO", "VER MOVIMIENTOS", "#60a5fa",VaadinIcon.PIE_CHART);
+
+        savings.addClickListener(e -> abrirVentanaReporte(user, movements));
+        graphic.addClickListener(e -> graphicMovements(user, movements));
 
         HorizontalLayout container = new HorizontalLayout(savings, graphic);
         container.setPadding(false);
@@ -304,6 +308,7 @@ public class Dashboard extends VerticalLayout implements BeforeEnterObserver {
 
     private Component navigationBar(){
         HorizontalLayout icons = new HorizontalLayout();
+        icons.setWidthFull();
         icons.setHeight("60px");
         icons.getStyle().set("position", "fixed");
         icons.getStyle().set("bottom", "0");
@@ -483,6 +488,7 @@ public class Dashboard extends VerticalLayout implements BeforeEnterObserver {
                 Conexiones db = new Conexiones();
                 try (Connection conn = db.getConnection()) {
                     db.updateSalary(user.getIdCliente(), sueldoField.getValue(), conn);
+                    db.updateSalaryUSer(user.getIdCliente(), sueldoField.getValue(), conn);
                 } catch (SQLException e){
                     e.printStackTrace();
                 }

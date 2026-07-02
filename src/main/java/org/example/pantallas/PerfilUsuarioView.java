@@ -5,6 +5,8 @@ import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.H4;
 import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.server.VaadinSession;
+import io.netty.channel.epoll.VSockAddress;
 import org.example.backend.Conexiones;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.H2;
@@ -104,6 +106,12 @@ public class PerfilUsuarioView extends VerticalLayout implements BeforeEnterObse
         String cedula="";
         String correo="";
         double sueldo=0.0;
+        Cliente user = VaadinSession.getCurrent().getAttribute(Cliente.class);
+
+        if (user == null){
+            UI.getCurrent().navigate("login");
+            return;
+        }
 
         try{
             con = Conexiones.getConnection();
@@ -339,6 +347,48 @@ public class PerfilUsuarioView extends VerticalLayout implements BeforeEnterObse
             add(new Span("Error al conectar a la base de datos: " + e.getMessage()));
             e.printStackTrace();
         }
+    }
+
+    private VerticalLayout crearBotonActividad(String titulo, VaadinIcon iconType, String ruta) {
+        VerticalLayout boton = new VerticalLayout();
+        boton.setWidth("100%");
+        boton.getStyle().set("background-color", "white");
+        boton.getStyle().set("border-radius", "15px");
+        boton.getStyle().set("cursor", "pointer");
+        boton.getStyle().set("transition", "background-color 0.3s");
+        boton.setPadding(true);
+
+        // Efectos de Hover (sombra al pasar el mouse/dedo)
+        boton.getElement().addEventListener("mouseover", e -> boton.getStyle().set("background-color", "#F0F0F0"));
+        boton.getElement().addEventListener("mouseout", e -> boton.getStyle().set("background-color", "white"));
+
+        // Navegación
+        boton.addClickListener(e -> UI.getCurrent().navigate(ruta));
+
+        // --- EL TRUCO DE LA ALINEACIÓN ---
+
+        Icon icono = iconType.create();
+        icono.getStyle().set("color", "black");
+        icono.setSize("24px");
+        // 1. Obligamos al ícono a ocupar exactamente 45px de ancho, sin encogerse
+        icono.getElement().getStyle().set("width", "45px");
+        icono.getElement().getStyle().set("flex-shrink", "0");
+
+        H3 texto = new H3(titulo);
+        texto.getStyle().set("color", "black");
+        texto.getStyle().set("margin", "0");
+        texto.getStyle().set("font-size", "1.1rem");
+
+        HorizontalLayout contenido = new HorizontalLayout(icono, texto);
+        contenido.setWidthFull();
+        contenido.setAlignItems(Alignment.CENTER);
+        // 2. Empujamos todo hacia la izquierda
+        contenido.setJustifyContentMode(JustifyContentMode.START);
+        // 3. Le damos un margen interno para que no quede pegado al borde izquierdo del celular
+        contenido.getStyle().set("padding-left", "25px");
+
+        boton.add(contenido);
+        return boton;
     }
 
     private void toggleModoEdicion(boolean editar) {

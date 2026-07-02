@@ -67,7 +67,8 @@ public class VentanaGastos extends VerticalLayout implements BeforeEnterObserver
 
         VerticalLayout mainContainer = new VerticalLayout();
         mainContainer.setMaxWidth("390px");
-        mainContainer.setPadding(false);
+        // MEJORA UI/UX: Cambiamos setPadding a true para que los campos no choquen con los bordes de la pantalla
+        mainContainer.setPadding(true);
         mainContainer.setSpacing(true);
 
         HorizontalLayout header = crearHeader();

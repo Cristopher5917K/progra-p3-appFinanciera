@@ -23,6 +23,7 @@ import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.VaadinSession;
 import org.example.backend.Conexiones;
+import org.example.info.Cliente;
 import org.example.info.Meta;
 
 import java.sql.Connection;
@@ -76,7 +77,6 @@ public class MetasView extends VerticalLayout implements BeforeEnterObserver {
         removeAll();
         setSizeUndefined();
         setWidthFull();
-        setWidth("390px");
         getStyle().set("background-color", "#F8F9FA");
         getStyle().set("margin", "0 auto");
         getStyle().set("padding-bottom", "60px");
@@ -85,9 +85,9 @@ public class MetasView extends VerticalLayout implements BeforeEnterObserver {
 
         header = new VerticalLayout();
         header.getStyle().set("background", "linear-gradient(160deg, #0D2B55 0%, #1a4a8a 100%)");
-        header.getStyle().set("padding-bottom", "16px");
+        header.getStyle().set("padding-bottom", "14px");
         header.setWidthFull();
-        header.setPadding(false);
+        header.setPadding(true);
         header.setSpacing(true);
 
         H1 title = new H1("Mis Metas");
@@ -125,7 +125,7 @@ public class MetasView extends VerticalLayout implements BeforeEnterObserver {
         fab.getStyle().set("background-color", "#27AE60");
         fab.getStyle().set("color", "white");
         fab.getStyle().set("box-shadow", "0 8px 24px rgba(39,174,96,0.45)");
-        fab.addClickListener(e -> openAddGoalDialog());
+        fab.addClickListener(e -> openAddGoalDialog(false));
 
         add(header, filterLayout, goalsContainer, fab, navigationBar());
         loadAndRefresh();
@@ -263,23 +263,41 @@ public class MetasView extends VerticalLayout implements BeforeEnterObserver {
         return card;
     }
 
-    private void openAddGoalDialog() {
+    private void openAddGoalDialog(boolean obligatorio) {
         Dialog dialog = new Dialog();
-        dialog.setHeaderTitle("Nueva Meta");
+
+        // Título dinámico dependiendo de la situación
+        dialog.setHeaderTitle(obligatorio ? "¡Crea tu primera meta!" : "Nueva Meta");
+
+        // Si es obligatorio, bloqueamos las salidas de escape
+        if (obligatorio) {
+            dialog.setCloseOnEsc(false);
+            dialog.setCloseOnOutsideClick(false);
+            Span mensajeAnimacion = new Span("Para ayudarte a mejorar tus finanzas, necesitas registrar al menos un objetivo.");
+            mensajeAnimacion.getStyle().set("font-size", "0.9rem").set("color", "#64748B");
+            dialog.add(mensajeAnimacion);
+        }
 
         TextField nameField = new TextField("Nombre");
         NumberField targetAmountField = new NumberField("Monto Objetivo");
         DatePicker deadlinePicker = new DatePicker("Fecha Límite");
         TextField categoryField = new TextField("Categoría");
         TextField colorField = new TextField("Color (Hex)");
+        colorField.setPlaceholder("#27AE60");
 
         Button saveButton = new Button("Guardar", e -> {
+            // Validar que llenen al menos lo básico
+            if (nameField.isEmpty() || targetAmountField.isEmpty() || deadlinePicker.isEmpty()) {
+                Notification.show("Por favor, llena los campos básicos (Nombre, Monto y Fecha).");
+                return;
+            }
+
             try (Connection conn = Conexiones.getConnection()) {
                 Meta newMeta = new Meta(0, nameField.getValue(), targetAmountField.getValue(), 0, deadlinePicker.getValue(), colorField.getValue(), categoryField.getValue(), LocalDate.now());
                 if (new Conexiones().addMeta(newMeta, idUsuario, conn)) {
                     Notification.show("Meta añadida con éxito.");
-                    loadAndRefresh();
-                    dialog.close();
+                    dialog.close(); // Cerramos la ventana PRIMERO
+                    loadAndRefresh(); // Luego recargamos la lista
                 } else {
                     Notification.show("Error al añadir la meta.");
                 }
@@ -288,11 +306,21 @@ public class MetasView extends VerticalLayout implements BeforeEnterObserver {
                 Notification.show("Error de base de datos.");
             }
         });
-        Button cancelButton = new Button("Cancelar", e -> dialog.close());
+
+        saveButton.getStyle().set("background-color", "#27AE60").set("color", "white");
 
         dialog.add(nameField, targetAmountField, deadlinePicker, categoryField, colorField);
-        dialog.getFooter().add(cancelButton, saveButton);
+
+        // Configuración dinámica de los botones inferiores
+        if (!obligatorio) {
+            Button cancelButton = new Button("Cancelar", e -> dialog.close());
+            dialog.getFooter().add(cancelButton, saveButton);
+        } else {
+            dialog.getFooter().add(saveButton); // Sin botón de cancelar para obligar el registro
+        }
+
         dialog.open();
+
     }
 
     private void openContributeDialog(Meta goal) {
@@ -350,6 +378,7 @@ public class MetasView extends VerticalLayout implements BeforeEnterObserver {
         dialog.getFooter().add(cancelButton, deleteButton);
         dialog.open();
     }
+
 
     private Component navigationBar(){
         HorizontalLayout icons = new HorizontalLayout();

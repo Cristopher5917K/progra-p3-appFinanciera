@@ -127,7 +127,7 @@ public class Login extends VerticalLayout implements BeforeEnterObserver {
         });
 
         btadmin_panel.addClickListener(event -> {
-            getUI().ifPresent(ui -> ui.navigate(""));
+            getUI().ifPresent(ui -> ui.navigate("admin"));
         });
     }
 

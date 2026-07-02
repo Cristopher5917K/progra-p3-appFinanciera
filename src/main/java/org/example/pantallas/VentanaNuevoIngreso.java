@@ -63,7 +63,6 @@ public class VentanaNuevoIngreso extends VerticalLayout implements BeforeEnterOb
         setWidth("390px");
         getStyle().set("margin", "0 auto");
         getStyle().set("padding-bottom", "68px");
-        getStyle().set("background-color", "#F8F9FA");
         setSpacing(false);
         setPadding(false);
 
@@ -75,7 +74,7 @@ public class VentanaNuevoIngreso extends VerticalLayout implements BeforeEnterOb
                 categoryCards(),
                 frequencyCard(),
                 crearSeccionFecha(),
-                save()
+                save(user.getIdCliente())
         );
 
         add(
@@ -244,7 +243,7 @@ public class VentanaNuevoIngreso extends VerticalLayout implements BeforeEnterOb
         return frequencyContainer;
     }
 
-    private Component save(){
+    private Component save(int id){
         VerticalLayout container = new VerticalLayout();
         container.setWidthFull();
         container.setSpacing(true);
@@ -264,13 +263,13 @@ public class VentanaNuevoIngreso extends VerticalLayout implements BeforeEnterOb
         message.getStyle().set("font-weight", "bold");
 
         container.addClickListener(e ->{
-            if (amount.getValue() > 0 && amount.getValue() != null){
+            if (amount.getValue() != null && amount.getValue() > 0){
                 Conexiones database = new Conexiones();
                 try {
                     Connection conn = database.getConnection();
                     if (conn != null){
                         Date dateIncome = Date.valueOf(date.getValue());
-                        database.insertarMovimiento(conn, idUsuario, "INGRESO", categoria, frecuencia, amount.getValue(), dateIncome);
+                        database.insertarMovimiento(conn, id, "INGRESO", categoria, frecuencia, amount.getValue(), dateIncome);
                         UI.getCurrent().navigate("dashboard");
                     }
                 } catch (Exception ex) {
