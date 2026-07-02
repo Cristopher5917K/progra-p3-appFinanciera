@@ -10,26 +10,54 @@ import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.NumberField;
+import com.vaadin.flow.router.BeforeEnterEvent;
+import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.VaadinSession;
 import org.example.backend.Conexiones;
+import org.example.info.Cliente;
 
 import java.sql.Connection;
 import java.sql.Date;
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
 
 @Route("ingreso")
-public class VentanaNuevoIngreso extends VerticalLayout {
+public class VentanaNuevoIngreso extends VerticalLayout implements BeforeEnterObserver {
     private final List<VerticalLayout> category = new ArrayList<>();
     private final List<HorizontalLayout> timeSpam = new ArrayList<>();
     private NumberField amount;
     private DatePicker date;
     private String categoria = "SUELDO";
     private String frecuencia = "MENSUAL";
+    private Integer idUsuario;
+    private Cliente user;
 
-    public VentanaNuevoIngreso(){
+    @Override
+    public void beforeEnter(BeforeEnterEvent event) {
+        idUsuario = (Integer) VaadinSession.getCurrent().getAttribute("usuarioId");
+        if (idUsuario == null) {
+            event.rerouteTo("");
+        } else {
+            try (Connection conn = Conexiones.getConnection()) {
+                user = new Conexiones().userInfoById(idUsuario, conn);
+                if (user == null) {
+                    event.rerouteTo("");
+                } else {
+                    createUI();
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+                add(new Span("Error al conectar con la base de datos."));
+            }
+        }
+    }
+
+    private void createUI(){
+        removeAll();
         setSizeUndefined();
         setWidthFull();
         setWidth("390px");
@@ -52,7 +80,8 @@ public class VentanaNuevoIngreso extends VerticalLayout {
 
         add(
                 headerIncome(),
-                mainContainer
+                mainContainer,
+                navigationBar()
         );
     }
 
@@ -172,10 +201,6 @@ public class VentanaNuevoIngreso extends VerticalLayout {
 
         category.addAll(List.of(option1, option2, option3));
 
-        /*for (VerticalLayout card : category){
-            card.addClickListener(e -> seleccionarTarjetaCategoria(card));
-        }*/
-
         option1.addClickListener(e -> {seleccionarTarjetaCategoria(option1); categoria = "SUELDO";});
         option2.addClickListener(e -> {seleccionarTarjetaCategoria(option2); categoria = "FREELANCE";});
         option3.addClickListener(e -> {seleccionarTarjetaCategoria(option3); categoria = "OTROS";});
@@ -206,10 +231,6 @@ public class VentanaNuevoIngreso extends VerticalLayout {
         HorizontalLayout option3 = crearTarjetaFrecuencia("SEMANAL", "CADA SEMANA");
 
         timeSpam.addAll(List.of(option1, option2, option3));
-
-        /*for (HorizontalLayout card1 : timeSpam){
-            card1.addClickListener(e -> seleccionarTarjetaFrecuencia(card1));
-        }*/
 
         option1.addClickListener(e -> {seleccionarTarjetaFrecuencia(option1); frecuencia = "MENSUAL";});
         option2.addClickListener(e -> {seleccionarTarjetaFrecuencia(option2); frecuencia = "QUINCENAL";});
@@ -248,10 +269,6 @@ public class VentanaNuevoIngreso extends VerticalLayout {
                 try {
                     Connection conn = database.getConnection();
                     if (conn != null){
-                        Integer idUsuario = (Integer) com.vaadin.flow.server.VaadinSession.getCurrent().getAttribute("usuarioId");
-                        if (idUsuario == null) {
-                            idUsuario = 1;
-                        }
                         Date dateIncome = Date.valueOf(date.getValue());
                         database.insertarMovimiento(conn, idUsuario, "INGRESO", categoria, frecuencia, amount.getValue(), dateIncome);
                         UI.getCurrent().navigate("dashboard");
@@ -369,5 +386,50 @@ public class VentanaNuevoIngreso extends VerticalLayout {
         seleccionada.getStyle().set("border", "2px solid #28a745");
         seleccionada.getStyle().set("background-color", "#F0FFF4");
         seleccionada.getChildren().filter(c -> c instanceof Icon).forEach(c -> ((Icon) c).setColor("#28a745"));
+    }
+
+    private Component navigationBar(){
+        HorizontalLayout icons = new HorizontalLayout();
+        icons.setHeight("60px");
+        icons.getStyle().set("position", "fixed");
+        icons.getStyle().set("bottom", "0");
+        icons.getStyle().set("left", "50%");
+        icons.getStyle().set("transform", "translateX(-50%)");
+        icons.getStyle().set("width", "100%");
+        icons.getStyle().set("max-width", "390px");
+
+        icons.getStyle().set("background-color", "var(--lumo-base-color)");
+        icons.getStyle().set("border-top", "1px solid var(--lumo-contrast-10pct)");
+        icons.getStyle().set("z-index", "100");
+
+        icons.setJustifyContentMode(JustifyContentMode.EVENLY);
+        icons.setVerticalComponentAlignment(Alignment.CENTER);
+
+        Icon home = VaadinIcon.HOME_O.create();
+
+        Icon expenses = VaadinIcon.WALLET.create();
+
+        Icon incomes = VaadinIcon.MONEY.create();
+
+        Icon goals = VaadinIcon.BULLSEYE.create();
+
+        Icon user = VaadinIcon.USER.create();
+
+
+        Icon[] icon = {home, expenses, incomes, goals, user};
+        for(Icon image : icon){
+            image.setColor("#A0AEC0");
+            image.setSize("24px");
+            image.getStyle().set("cursor", "pointer");
+        }
+
+        incomes.setColor("#28a745");
+        home.addClickListener(e -> UI.getCurrent().navigate("dashboard"));
+        goals.addClickListener(e -> UI.getCurrent().navigate("metas"));
+        expenses.addClickListener(e -> UI.getCurrent().navigate("gasto"));
+        user.addClickListener(e -> UI.getCurrent().navigate("perfil"));
+
+        icons.add(home, expenses, incomes, goals, user);
+        return icons;
     }
 }

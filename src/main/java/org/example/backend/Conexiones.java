@@ -109,8 +109,6 @@ public class Conexiones {
                         success.getString("cedula"),
                         success.getDouble("initial_salary")
                 );
-            } else {
-                JOptionPane.showMessageDialog(null, "NO SE ENCONTRO AL USUARIO");
             }
         } catch (Exception e){
             e.printStackTrace();
@@ -210,32 +208,46 @@ public class Conexiones {
     }
 
     public double sumarGastosDelMes(int clienteId, Connection conn) {
-        // Usamos YEAR(fecha) y MONTH(fecha) para filtrar el mes actual directamente en SQL
-        String sql = "SELECT SUM(monto) AS total_gastos FROM movimiento " +
-                "WHERE cliente = ? AND tipo_movimiento = 'GASTO' " +
-                "AND YEAR(fecha) = YEAR(CURDATE()) AND MONTH(fecha) = MONTH(CURDATE())";
+        String sql = "SELECT SUM(monto) AS total_gastos FROM movimiento WHERE cliente = ? AND tipo_movimiento = 'GASTO'";
 
         try (PreparedStatement data = conn.prepareStatement(sql)) {
             data.setInt(1, clienteId);
             ResultSet rs = data.executeQuery();
 
             if (rs.next()) {
-                return rs.getDouble("total_gastos"); // Devuelve la suma calculada por SQL
+                return rs.getDouble("total_gastos");
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return 0.0; // Si no hay gastos, devuelve 0
+        return 0.0;
     }
 
-    public List<Movimientos> movements(String tipo, Connection conn){
-        String sql = "SELECT * FROM movimiento WHERE tipo_movimiento = ?";
+    public double sumarIngresosDelMes(int clienteId, Connection conn) {
+        String sql = "SELECT SUM(monto) AS total_ingresos FROM movimiento WHERE cliente = ? AND tipo_movimiento = 'INGRESO'";
+
+        try (PreparedStatement data = conn.prepareStatement(sql)) {
+            data.setInt(1, clienteId);
+            ResultSet rs = data.executeQuery();
+
+            if (rs.next()) {
+                return rs.getDouble("total_ingresos");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0.0;
+    }
+
+    public List<Movimientos> movements(String tipo, int idUsuario, Connection conn){
+        String sql = "SELECT * FROM movimiento WHERE tipo_movimiento = ? AND cliente = ?";
 
         List<Movimientos> info = new ArrayList<>();
 
         try{
             PreparedStatement data = conn.prepareStatement(sql);
             data.setString(1, tipo);
+            data.setInt(2, idUsuario);
 
             ResultSet search =  data.executeQuery();
             while (search.next()){

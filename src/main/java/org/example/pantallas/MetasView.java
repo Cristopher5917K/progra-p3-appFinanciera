@@ -18,6 +18,8 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.router.BeforeEnterEvent;
+import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.VaadinSession;
 import org.example.backend.Conexiones;
@@ -33,23 +35,25 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Route("metas")
-public class MetasView extends VerticalLayout {
+public class MetasView extends VerticalLayout implements BeforeEnterObserver {
 
     private List<Meta> goals = new ArrayList<>();
     private VerticalLayout goalsContainer = new VerticalLayout();
     private Integer idUsuario;
     private VerticalLayout header;
 
-    public MetasView() {
-        try {
-            idUsuario = (Integer) VaadinSession.getCurrent().getAttribute("usuarioId");
-            if (idUsuario == null) {
-                idUsuario = 1; // Fallback to user 1 if not in session
+    @Override
+    public void beforeEnter(BeforeEnterEvent event) {
+        idUsuario = (Integer) VaadinSession.getCurrent().getAttribute("usuarioId");
+        if (idUsuario == null) {
+            event.rerouteTo("");
+        } else {
+            try {
+                createUI();
+            } catch (Exception e) {
+                add(new Span("Error al cargar la vista de metas: " + e.getMessage()));
+                e.printStackTrace();
             }
-            createUI();
-        } catch (Exception e) {
-            add(new Span("Error al cargar la vista de metas: " + e.getMessage()));
-            e.printStackTrace();
         }
     }
 
@@ -69,6 +73,7 @@ public class MetasView extends VerticalLayout {
     }
 
     private void createUI() {
+        removeAll();
         setSizeUndefined();
         setWidthFull();
         setWidth("390px");
@@ -78,7 +83,6 @@ public class MetasView extends VerticalLayout {
         setPadding(false);
         setSpacing(false);
 
-        // Header
         header = new VerticalLayout();
         header.getStyle().set("background", "linear-gradient(160deg, #0D2B55 0%, #1a4a8a 100%)");
         header.getStyle().set("padding-bottom", "16px");
@@ -99,7 +103,6 @@ public class MetasView extends VerticalLayout {
 
         header.add(title, subtitle);
 
-        // Filtering
         ComboBox<String> filterComboBox = new ComboBox<>("Ordenar por");
         filterComboBox.setItems("Más Recientes (FIFO)", "Menos Recientes (LIFO)", "Nombre (A-Z)", "Progreso (Mayor a Menor)");
         filterComboBox.addValueChangeListener(event -> sortGoals(event.getValue()));
@@ -112,7 +115,6 @@ public class MetasView extends VerticalLayout {
         goalsContainer.setPadding(true);
         goalsContainer.setSpacing(true);
 
-        // FAB
         Button fab = new Button(new Icon(VaadinIcon.PLUS));
         fab.getStyle().set("position", "fixed");
         fab.getStyle().set("bottom", "80px");

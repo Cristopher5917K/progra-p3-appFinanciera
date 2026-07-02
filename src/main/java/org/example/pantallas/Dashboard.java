@@ -11,35 +11,56 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.Scroller;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.router.BeforeEnterEvent;
+import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import com.vaadin.flow.component.dialog.Dialog;
 import org.example.backend.Conexiones;
 import org.example.info.Cliente;
+import org.example.info.Movimientos;
 
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 @Route("dashboard")
-public class Dashboard extends VerticalLayout {
-    public Dashboard(){
-        Cliente user = VaadinSession.getCurrent().getAttribute(Cliente.class);
+public class Dashboard extends VerticalLayout implements BeforeEnterObserver {
 
-        if (user == null) {
-            UI.getCurrent().navigate("login");
-            return;
+    private Integer idUsuario;
+    private Cliente user;
+
+    @Override
+    public void beforeEnter(BeforeEnterEvent event) {
+        idUsuario = (Integer) VaadinSession.getCurrent().getAttribute("usuarioId");
+        if (idUsuario == null) {
+            event.rerouteTo("");
+        } else {
+            try (Connection conn = Conexiones.getConnection()) {
+                user = new Conexiones().userInfoById(idUsuario, conn);
+                if (user == null) {
+                    event.rerouteTo("");
+                } else {
+                    createUI();
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+                add(new Span("Error al conectar con la base de datos."));
+            }
         }
+    }
 
+    private void createUI(){
+        removeAll();
         setSizeUndefined();
         setWidthFull();
         setWidth("390px");
         getStyle().set("background-color", "#F8F9FA");
         getStyle().set("margin", "0 auto");
         getStyle().set("padding-bottom", "60px");
-        //setHeight("100vh");
         setPadding(false);
         setSpacing(false);
 
@@ -333,8 +354,17 @@ public class Dashboard extends VerticalLayout {
         contenedor.setPadding(false);
         contenedor.getStyle().set("margin-bottom", "20px");
 
-        VerticalLayout cardIngresos = crearTarjetaMini("INGRESOS", "$3,200", VaadinIcon.ARROW_UP, true);
-        VerticalLayout cardGastos = crearTarjetaMini("GASTOS", "$1,450", VaadinIcon.ARROW_DOWN, false);
+        double totalIngresos = 0;
+        double totalGastos = 0;
+        try (Connection conn = Conexiones.getConnection()) {
+            totalIngresos = new Conexiones().sumarIngresosDelMes(user.getIdCliente(), conn);
+            totalGastos = new Conexiones().sumarGastosDelMes(user.getIdCliente(), conn);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        VerticalLayout cardIngresos = crearTarjetaMini("INGRESOS", String.format("$%,.2f", totalIngresos), VaadinIcon.ARROW_UP, true);
+        VerticalLayout cardGastos = crearTarjetaMini("GASTOS", String.format("$%,.2f", totalGastos), VaadinIcon.ARROW_DOWN, false);
 
         contenedor.add(cardIngresos, cardGastos);
         return contenedor;
@@ -400,21 +430,25 @@ public class Dashboard extends VerticalLayout {
         VerticalLayout listaMovimientos = new VerticalLayout();
         listaMovimientos.setPadding(false);
 
-        // SIMULACIÓN DINÁMICA: Aquí es donde después usarás un 'for' con tu lista de SQLWorkbench
-        for (int i = 1; i <= 6; i++) {
-            HorizontalLayout fila = new HorizontalLayout();
-            fila.setWidthFull();
-            fila.setJustifyContentMode(JustifyContentMode.BETWEEN);
+        try (Connection conn = Conexiones.getConnection()) {
+            List<Movimientos> movimientos = new Conexiones().movements(esIngreso ? "INGRESO" : "GASTO", idUsuario, conn);
+            for (Movimientos movimiento : movimientos) {
+                HorizontalLayout fila = new HorizontalLayout();
+                fila.setWidthFull();
+                fila.setJustifyContentMode(JustifyContentMode.BETWEEN);
 
-            Span desc = new Span(esIngreso ? "Depósito de nómina" : "Gasto en Supermaxi");
-            desc.getStyle().set("font-size", "0.9rem");
+                Span desc = new Span(movimiento.getCategoria());
+                desc.getStyle().set("font-size", "0.9rem");
 
-            Span valor = new Span(esIngreso ? "+$500.00" : "-$45.00");
-            valor.getStyle().set("color", esIngreso ? "#28a745" : "#dc3545");
-            valor.getStyle().set("font-weight", "bold");
+                Span valor = new Span((esIngreso ? "+$" : "-$") + String.format("%,.2f", movimiento.getMonto()));
+                valor.getStyle().set("color", esIngreso ? "#28a745" : "#dc3545");
+                valor.getStyle().set("font-weight", "bold");
 
-            fila.add(desc, valor);
-            listaMovimientos.add(fila);
+                fila.add(desc, valor);
+                listaMovimientos.add(fila);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
 
         Scroller scroller = new Scroller(listaMovimientos);
@@ -433,7 +467,7 @@ public class Dashboard extends VerticalLayout {
         Dialog ventanaSueldo = new Dialog();
         ventanaSueldo.setHeaderTitle("¡Bienvenido! Configura tu cuenta");
         ventanaSueldo.setCloseOnEsc(false);
-        ventanaSueldo.setCloseOnOutsideClick(false); // Obliga a que ingresen un dato
+        ventanaSueldo.setCloseOnOutsideClick(false);
 
         VerticalLayout layout = new VerticalLayout();
         Span mensaje = new Span("Para darte mejores recomendaciones, ingresa tu sueldo mensual actual:");
@@ -446,11 +480,8 @@ public class Dashboard extends VerticalLayout {
         Button btnGuardar = new Button("Guardar y Empezar", event -> {
             if (sueldoField.getValue() != null && sueldoField.getValue() > 0) {
 
-                // 1. Actualizar el sueldo en la base de datos usando un método UPDATE
                 Conexiones db = new Conexiones();
-                Connection conn = null;
-                try {
-                    conn = db.getConnection();
+                try (Connection conn = db.getConnection()) {
                     db.updateSalary(user.getIdCliente(), sueldoField.getValue(), conn);
                 } catch (SQLException e){
                     e.printStackTrace();

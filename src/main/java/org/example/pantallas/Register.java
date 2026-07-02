@@ -1,10 +1,12 @@
 package org.example.pantallas;
 
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.H4;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Route;
@@ -22,15 +24,14 @@ public class Register extends VerticalLayout{
 
 
         VerticalLayout seccionSuperior = new VerticalLayout();
-        seccionSuperior.setWidthFull(); // Ocupa todo el ancho
-        seccionSuperior.setHeight("45vh"); // Ocupa el 45% de la altura de la pantalla
+        seccionSuperior.setWidthFull();
+        seccionSuperior.setHeight("45vh");
         seccionSuperior.setPadding(true);
         seccionSuperior.setAlignItems(Alignment.CENTER);
-        seccionSuperior.setJustifyContentMode(JustifyContentMode.CENTER); // Centra logo y textos verticalmente
+        seccionSuperior.setJustifyContentMode(JustifyContentMode.CENTER);
 
-        // 🎨 ESTILOS CSS PARA LA SECCIÓN SUPERIOR: Degradado azul y forma curva
-        seccionSuperior.getStyle().set("background", "linear-gradient(90deg, #2ecc71 0%, #2ec4b6 100%)"); // Degradado de azul oscuro a más claro
-        seccionSuperior.getStyle().set("border-radius", "0 0 50px 50px"); // Redondea las esquinas inferiores (la "curva")
+        seccionSuperior.getStyle().set("background", "linear-gradient(90deg, #2ecc71 0%, #2ec4b6 100%)");
+        seccionSuperior.getStyle().set("border-radius", "0 0 50px 50px");
         seccionSuperior.getStyle().set("box-shadow", "0px 4px 15px rgba(0, 0, 0, 0.1)");
 
 
@@ -73,7 +74,7 @@ public class Register extends VerticalLayout{
         add(seccionSuperior, id, txtfid, name, txtfname, lastname, txtflastname, mail, txtfmail, password, txtfpassword, btnregister,btnbacklogin);
 
         btnbacklogin.addClickListener(event -> {
-            getUI().ifPresent(ui -> ui.navigate("login"));
+            getUI().ifPresent(ui -> ui.navigate(""));
         });
 
         btnregister.addClickListener(event -> {
@@ -85,14 +86,15 @@ public class Register extends VerticalLayout{
             String correo = txtfmail.getValue();
             String contrasena = txtfpassword.getValue();
 
-            //pongang el metodo para registrar usuarios (gays)
             try {
                 conn = database.getConnection();
                 database.registerUser(conn, nombre, apellido, correo, contrasena,0.0 , cedula);
                 database.registerClient(conn, nombre, apellido, cedula, 0.0, contrasena);
+                Notification.show("¡Registro exitoso!", 3000, Notification.Position.TOP_CENTER);
+                getUI().ifPresent(ui -> ui.navigate(""));
             } catch (SQLException e){
                 e.printStackTrace();
-                System.out.println("ERROR AL REGISTRAR");
+                Notification.show("Error al registrar el usuario.", 3000, Notification.Position.TOP_CENTER);
             }
         });
 

@@ -1,5 +1,6 @@
 package org.example.pantallas;
 
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.H4;
@@ -13,18 +14,20 @@ import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.router.BeforeEnterEvent;
+import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.VaadinSession;
 
 import java.sql.Connection;
 import java.util.Map;
 
 @Route("perfil")
-public class PerfilUsuarioView extends VerticalLayout {
+public class PerfilUsuarioView extends VerticalLayout implements BeforeEnterObserver {
 
     private Integer idUsuario;
     private Connection con;
 
-    /*Declaramos las variables*/
     private Span lblNombreCompleto;
     private Span lblCorreo;
     private Span lblCedula;
@@ -41,12 +44,32 @@ public class PerfilUsuarioView extends VerticalLayout {
     private Button btnCancelar;
     private HorizontalLayout botonesAccion;
 
-    public PerfilUsuarioView() {
-        this.setSizeFull();
-        this.setAlignItems(Alignment.CENTER);
-        this.setPadding(false);
-        this.setSpacing(false);
-        this.getStyle().set("background-color", "#F8F9FA");
+    @Override
+    public void beforeEnter(BeforeEnterEvent event) {
+        idUsuario = (Integer) VaadinSession.getCurrent().getAttribute("usuarioId");
+        if (idUsuario == null) {
+            event.rerouteTo("");
+        } else {
+            try {
+                createUI();
+            } catch (Exception e) {
+                add(new Span("Error al cargar la vista de perfil: " + e.getMessage()));
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void createUI() {
+        removeAll();
+        setSizeUndefined();
+        setWidthFull();
+        setWidth("390px");
+        getStyle().set("background-color", "#F8F9FA");
+        getStyle().set("margin", "0 auto");
+        getStyle().set("padding-bottom", "60px");
+        setPadding(false);
+        setSpacing(false);
+
         VerticalLayout container = new VerticalLayout();
         container.setWidth("100%");
         container.setPadding(false);
@@ -83,10 +106,6 @@ public class PerfilUsuarioView extends VerticalLayout {
         double sueldo=0.0;
 
         try{
-            idUsuario = (Integer) com.vaadin.flow.server.VaadinSession.getCurrent().getAttribute("usuarioId");
-            if (idUsuario == null) {
-                idUsuario = 1;
-            }
             con = Conexiones.getConnection();
             Map<String, Object> profile = new Conexiones().userProfileInfo(idUsuario, con);
             
@@ -131,7 +150,6 @@ public class PerfilUsuarioView extends VerticalLayout {
             lblSueldo = new Span("Sueldo: $" + sueldo);
             lblSueldo.getStyle().set("color", "#8fa3bf");
 
-            // TextFields para editar
             txtNombre = new TextField("Nombre");
             txtNombre.setValue(nombre);
             txtNombre.setVisible(false);
@@ -157,7 +175,6 @@ public class PerfilUsuarioView extends VerticalLayout {
             txtSueldo.setVisible(false);
             txtSueldo.setWidthFull();
 
-            // Botones
             btnEditar = new Button(VaadinIcon.EDIT.create());
             btnEditar.getStyle().set("border-radius", "50%");
             btnEditar.getStyle().set("width", "40px");
@@ -179,7 +196,6 @@ public class PerfilUsuarioView extends VerticalLayout {
             btnCancelar.getStyle().set("font-weight", "bold");
             btnCancelar.setWidthFull();
 
-            // Listeners
             btnEditar.addClickListener(event -> toggleModoEdicion(true));
             btnGuardar.addClickListener(event -> guardarCambios());
             btnCancelar.addClickListener(event -> toggleModoEdicion(false));
@@ -203,7 +219,6 @@ public class PerfilUsuarioView extends VerticalLayout {
             seccionPerfil.add(mainTitle, userCard, btnEditar);
             container.add(seccionPerfil);
 
-            // Sección de Actividad
             VerticalLayout containerActividad = new VerticalLayout();
             containerActividad.setWidth("100%");
             containerActividad.setPadding(false);
@@ -215,20 +230,12 @@ public class PerfilUsuarioView extends VerticalLayout {
             tituloActividad.getStyle().set("padding","15px");
             containerActividad.add(tituloActividad);
 
-            // Sección de Metas
             VerticalLayout containerMetas = new VerticalLayout();
             containerMetas.setWidth("100%");
             containerMetas.getStyle().set("background-color", "white");
             containerMetas.getStyle().set("border-radius", "15px");
             containerMetas.getStyle().set("cursor", "pointer");
-            containerMetas.getStyle().set("transition", "background-color 0.3s");
             containerMetas.addClickListener(e -> UI.getCurrent().navigate("metas"));
-            containerMetas.getElement().addEventListener("mouseover", e -> {
-                containerMetas.getStyle().set("background-color", "#F0F0F0");
-            });
-            containerMetas.getElement().addEventListener("mouseout", e -> {
-                containerMetas.getStyle().set("background-color", "white");
-            });
 
             Icon iconMetas = VaadinIcon.BULLSEYE.create();
             iconMetas.getStyle().set("color", "black");
@@ -252,18 +259,11 @@ public class PerfilUsuarioView extends VerticalLayout {
             containerDashboard.getStyle().set("background-color", "white");
             containerDashboard.getStyle().set("border-radius", "15px");
             containerDashboard.getStyle().set("cursor", "pointer");
-            containerDashboard.getStyle().set("transition", "background-color 0.3s");
             containerDashboard.addClickListener(e -> UI.getCurrent().navigate("dashboard"));
-            containerDashboard.getElement().addEventListener("mouseover", e -> {
-                containerDashboard.getStyle().set("background-color", "#F0F0F0");
-            });
-            containerDashboard.getElement().addEventListener("mouseout", e -> {
-                containerDashboard.getStyle().set("background-color", "white");
-            });
 
             Icon iconDashboard = VaadinIcon.HOME_O.create();
-            iconMetas.getStyle().set("color", "black");
-            iconMetas.getStyle().set("font-size", "24px");
+            iconDashboard.getStyle().set("color", "black");
+            iconDashboard.getStyle().set("font-size", "24px");
 
             H3 titleDashboard = new H3("DASHBOARD");
             titleDashboard.getStyle().set("color", "black");
@@ -283,14 +283,7 @@ public class PerfilUsuarioView extends VerticalLayout {
             containerExpenses.getStyle().set("background-color", "white");
             containerExpenses.getStyle().set("border-radius", "15px");
             containerExpenses.getStyle().set("cursor", "pointer");
-            containerExpenses.getStyle().set("transition", "background-color 0.3s");
             containerExpenses.addClickListener(e -> UI.getCurrent().navigate("gasto"));
-            containerExpenses.getElement().addEventListener("mouseover", e -> {
-                containerExpenses.getStyle().set("background-color", "#F0F0F0");
-            });
-            containerExpenses.getElement().addEventListener("mouseout", e -> {
-                containerExpenses.getStyle().set("background-color", "white");
-            });
 
             Icon iconExpenses = VaadinIcon.WALLET.create();
             iconExpenses.getStyle().set("color", "black");
@@ -314,18 +307,11 @@ public class PerfilUsuarioView extends VerticalLayout {
             containerIncome.getStyle().set("background-color", "white");
             containerIncome.getStyle().set("border-radius", "15px");
             containerIncome.getStyle().set("cursor", "pointer");
-            containerIncome.getStyle().set("transition", "background-color 0.3s");
             containerIncome.addClickListener(e -> UI.getCurrent().navigate("ingreso"));
-            containerIncome.getElement().addEventListener("mouseover", e -> {
-                containerIncome.getStyle().set("background-color", "#F0F0F0");
-            });
-            containerIncome.getElement().addEventListener("mouseout", e -> {
-                containerIncome.getStyle().set("background-color", "white");
-            });
 
             Icon iconIncome = VaadinIcon.MONEY.create();
-            iconMetas.getStyle().set("color", "black");
-            iconMetas.getStyle().set("font-size", "24px");
+            iconIncome.getStyle().set("color", "black");
+            iconIncome.getStyle().set("font-size", "24px");
 
             H3 titleIncome = new H3("INGRESOS");
             titleIncome.getStyle().set("color", "black");
@@ -340,7 +326,14 @@ public class PerfilUsuarioView extends VerticalLayout {
             containerActividad.add(containerIncome);
             container.add(containerIncome);
 
-            this.add(container);
+            Button logoutButton = new Button("Cerrar Sesión");
+            logoutButton.addClickListener(e -> {
+                VaadinSession.getCurrent().getSession().invalidate();
+                UI.getCurrent().navigate("");
+            });
+            container.add(logoutButton);
+
+            this.add(container, navigationBar());
 
         } catch (Exception e) {
             add(new Span("Error al conectar a la base de datos: " + e.getMessage()));
@@ -381,5 +374,45 @@ public class PerfilUsuarioView extends VerticalLayout {
         } else {
             Notification.show("Error al actualizar el perfil", 3000, Notification.Position.TOP_CENTER);
         }
+    }
+
+    private Component navigationBar(){
+        HorizontalLayout icons = new HorizontalLayout();
+        icons.setHeight("60px");
+        icons.getStyle().set("position", "fixed");
+        icons.getStyle().set("bottom", "0");
+        icons.getStyle().set("left", "50%");
+        icons.getStyle().set("transform", "translateX(-50%)");
+        icons.getStyle().set("width", "100%");
+        icons.getStyle().set("max-width", "390px");
+
+        icons.getStyle().set("background-color", "var(--lumo-base-color)");
+        icons.getStyle().set("border-top", "1px solid var(--lumo-contrast-10pct)");
+        icons.getStyle().set("z-index", "100");
+
+        icons.setJustifyContentMode(JustifyContentMode.EVENLY);
+        icons.setVerticalComponentAlignment(Alignment.CENTER);
+
+        Icon home = VaadinIcon.HOME_O.create();
+        Icon expenses = VaadinIcon.WALLET.create();
+        Icon incomes = VaadinIcon.MONEY.create();
+        Icon goals = VaadinIcon.BULLSEYE.create();
+        Icon user = VaadinIcon.USER.create();
+
+        Icon[] icon = {home, expenses, incomes, goals, user};
+        for(Icon image : icon){
+            image.setColor("#A0AEC0");
+            image.setSize("24px");
+            image.getStyle().set("cursor", "pointer");
+        }
+
+        user.setColor("#28a745");
+        home.addClickListener(e -> UI.getCurrent().navigate("dashboard"));
+        goals.addClickListener(e -> UI.getCurrent().navigate("metas"));
+        incomes.addClickListener(e -> UI.getCurrent().navigate("ingreso"));
+        expenses.addClickListener(e -> UI.getCurrent().navigate("gasto"));
+
+        icons.add(home, expenses, incomes, goals, user);
+        return icons;
     }
 }

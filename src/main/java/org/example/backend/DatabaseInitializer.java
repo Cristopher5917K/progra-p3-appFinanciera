@@ -1,5 +1,6 @@
 package org.example.backend;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import java.io.InputStream;
@@ -10,8 +11,16 @@ import java.sql.Statement;
 @Component
 public class DatabaseInitializer {
 
+    @Value("${app.db.recreate-on-startup:false}")
+    private boolean recreateOnStartup;
+
     @PostConstruct
     public void initialize() {
+        if (!recreateOnStartup) {
+            System.out.println("Omitiendo la inicialización de la base de datos.");
+            return;
+        }
+
         System.out.println("Iniciando inicialización de base de datos...");
         try (Connection conn = Conexiones.getConnection();
              Statement stmt = conn.createStatement()) {
