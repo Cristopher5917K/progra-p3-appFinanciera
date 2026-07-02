@@ -230,14 +230,14 @@ public class Conexiones {
         return 0.0; // Si no hay gastos, devuelve 0
     }
 
-    public List<Movimientos> movements(String tipo, Connection conn){
-        String sql = "SELECT * FROM movimiento WHERE tipo_movimiento = ?";
+    public List<Movimientos> movements(int idClient, Connection conn){
+        String sql = "SELECT * FROM movimiento WHERE cliente = ?";
 
         List<Movimientos> info = new ArrayList<>();
 
         try{
             PreparedStatement data = conn.prepareStatement(sql);
-            data.setString(1, tipo);
+            data.setInt(1, idClient);
 
             ResultSet search =  data.executeQuery();
             while (search.next()){
@@ -365,7 +365,7 @@ public class Conexiones {
         try {
             if (nombre.isEmpty() || apellido.isEmpty() || cedula.isEmpty()) {
                 resultado.put("success", false);
-                resultado.put("message", "⚠️ Completa todos los campos");
+                resultado.put("message", "Completa todos los campos");
                 return resultado;
             }
 
@@ -374,21 +374,21 @@ public class Conexiones {
 
             if (actualizado) {
                 resultado.put("success", true);
-                resultado.put("message", "✅ Perfil actualizado exitosamente");
+                resultado.put("message", "Perfil actualizado exitosamente");
                 resultado.put("nombre", nombre);
                 resultado.put("apellido", apellido);
                 resultado.put("cedula", cedula);
                 resultado.put("sueldo", sueldoNumerico);
             } else {
                 resultado.put("success", false);
-                resultado.put("message", "❌ Error al guardar cambios");
+                resultado.put("message", "Error al guardar cambios");
             }
         } catch (NumberFormatException e) {
             resultado.put("success", false);
-            resultado.put("message", "❌ El sueldo debe ser un número válido");
+            resultado.put("message", "El sueldo debe ser un número válido");
         } catch (Exception e) {
             resultado.put("success", false);
-            resultado.put("message", "❌ Error: " + e.getMessage());
+            resultado.put("message", "Error: " + e.getMessage());
         }
         
         return resultado;

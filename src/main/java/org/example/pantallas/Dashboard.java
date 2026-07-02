@@ -16,21 +16,38 @@ import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import com.vaadin.flow.component.dialog.Dialog;
 import org.example.backend.Conexiones;
+import org.example.backend.DataStructures;
 import org.example.info.Cliente;
+import org.example.info.Movimientos;
+import org.example.info.Reporte;
 
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeSet;
 
 @Route("dashboard")
 public class Dashboard extends VerticalLayout {
     public Dashboard(){
+        Conexiones database = new Conexiones();
+        Connection conn = null;
+        List<Movimientos> movements = new ArrayList<>();
         Cliente user = VaadinSession.getCurrent().getAttribute(Cliente.class);
 
         if (user == null) {
             UI.getCurrent().navigate("login");
             return;
+        }
+
+        try {
+            conn = database.getConnection();
+            movements = database.movements(user.getIdCliente(), conn);
+        } catch (SQLException e){
+            e.printStackTrace();
         }
 
         this.setWidthFull();
@@ -46,16 +63,15 @@ public class Dashboard extends VerticalLayout {
 
         if (user.getInitialSalary() <= 0){
             actualizarSueldo(user);
-
         }
 
         VerticalLayout mainContainer = new VerticalLayout();
         mainContainer.setPadding(true);
         mainContainer.setSpacing(true);
         mainContainer.add(
-                generateScroll(),
+                generateScroll(user, movements),
                 generatePercentage(user.getInitialSalary(), 1800),
-                recommendationsCards(user.getInitialSalary(),900),
+                recommendationsCards(user.getInitialSalary(),database.sumarGastosDelMes(user.getIdCliente(), conn)),
                 crearTarjetasMovimientos()
         );
 
@@ -91,9 +107,12 @@ public class Dashboard extends VerticalLayout {
         return headerInfo;
     }
 
-    private Component generateScroll(){
-        VerticalLayout savings = dynamicCard("MONTO AHORRO", "$24850","#4ade80" ,VaadinIcon.WALLET);
+    private Component generateScroll(Cliente user, List<Movimientos> movements){
+        VerticalLayout savings = dynamicCard("MONTO AHORRO", String.valueOf(user.getInitialSalary()),"#4ade80" ,VaadinIcon.WALLET);
         VerticalLayout graphic = dynamicCard("GRAFICO AHORRO", "VER MOVIMIENTOS", "#60a5fa",VaadinIcon.PIE_CHART);
+
+        savings.addClickListener(e -> abrirVentanaReporte(user, movements));
+        graphic.addClickListener(e -> graphicMovements(user, movements));
 
         HorizontalLayout container = new HorizontalLayout(savings, graphic);
         container.setPadding(false);
@@ -481,6 +500,147 @@ public class Dashboard extends VerticalLayout {
         ventanaSueldo.open();
     }
 
-    
+    private void graphicMovements(Cliente user, List<Movimientos> movimientosList){
+        Dialog graphic = new Dialog();
+        graphic.setHeaderTitle("GRAFICO DE AHORRO");
+        graphic.setWidth("350px");
+
+        DataStructures data = new DataStructures();
+
+        Map<String, Double> grafico = data.calculateDistribution(user, movimientosList);
+        TreeSet<Movimientos> filter = data.ordenarMovimientos(movimientosList);
+
+        double ahorro = grafico.get("Ahorros Disponibles");
+        double gastos = grafico.get("Gastos");
+        double total = ahorro + gastos;
+
+        System.out.println(ahorro);
+        System.out.println(gastos);
+
+        int percentage;
+
+        if (total > 0){
+           percentage = (int) Math.round((gastos / total) * 100);
+        } else {
+            percentage = 0;
+        }
+
+        VerticalLayout containerGraphic = new VerticalLayout();
+        containerGraphic.setAlignItems(Alignment.CENTER);
+        containerGraphic.setPadding(false);
+
+        Span donut = new Span();
+        donut.setWidth("150px");
+        donut.setHeight("150px");
+        donut.getStyle().set("border-radius", "50%");
+        // La magia visual: un gradiente cónico que crea la dona
+        donut.getStyle().set("background", "conic-gradient(#ED2100 " + percentage + "%, #28a745 " + percentage + "% 100%)");
+        // El agujero del centro
+        donut.getStyle().set("mask-image", "radial-gradient(circle, transparent 55%, black 56%)");
+        donut.getStyle().set("-webkit-mask-image", "radial-gradient(circle, transparent 55%, black 56%)");
+
+        HorizontalLayout leyendas = new HorizontalLayout();
+        leyendas.setWidthFull();
+        leyendas.setJustifyContentMode(JustifyContentMode.CENTER);
+
+        Span leyendaAhorro = new Span("Ahorro: $" + String.format("%.0f", ahorro));
+        leyendaAhorro.getStyle().set("color", "#28a745").set("font-size", "0.8rem").set("font-weight", "bold");
+
+        Span leyendaGastos = new Span("Gastos: $" + String.format("%.0f", gastos));
+        leyendaGastos.getStyle().set("color", "#ED2100").set("font-size", "0.8rem").set("font-weight", "bold");
+
+        leyendas.add(leyendaAhorro, leyendaGastos);
+        containerGraphic.add(donut, leyendas);
+
+        // 3. LA LISTA DE MOVIMIENTOS (De tu TreeSet)
+        VerticalLayout listaMovimientos = new VerticalLayout();
+        listaMovimientos.setPadding(false);
+        listaMovimientos.getStyle().set("margin-top", "15px");
+
+        Span tituloHistorial = new Span("Historial Reciente");
+        tituloHistorial.getStyle().set("font-weight", "bold").set("font-size", "0.9rem");
+        listaMovimientos.add(tituloHistorial);
+
+        if (filter.isEmpty()) {
+            listaMovimientos.add(new Span("No hay movimientos registrados."));
+        } else {
+            for (Movimientos mov : filter) {
+                HorizontalLayout fila = new HorizontalLayout();
+                fila.setWidthFull();
+                fila.setJustifyContentMode(JustifyContentMode.BETWEEN);
+
+                boolean esIngreso = "INGRESO".equalsIgnoreCase(mov.getTipoMovimiento());
+
+                Span desc = new Span(mov.getCategoria() + " (" + mov.getFecha().toString() + ")");
+                desc.getStyle().set("font-size", "0.8rem");
+
+                Span valor = new Span((esIngreso ? "+$" : "-$") + mov.getMonto());
+                valor.getStyle().set("color", esIngreso ? "#28a745" : "#dc3545");
+                valor.getStyle().set("font-weight", "bold");
+
+                fila.add(desc, valor);
+                listaMovimientos.add(fila);
+            }
+        }
+
+        Scroller scroller = new Scroller(listaMovimientos);
+        scroller.setMaxHeight("200px");
+        scroller.setWidthFull();
+
+        graphic.add(containerGraphic, scroller);
+        graphic.getFooter().add(new Button("Cerrar", e -> graphic.close()));
+
+        graphic.open();
+
+    }
+
+    private void abrirVentanaReporte(Cliente user, List<Movimientos> movimientosList) {
+        DataStructures dataStructures = new DataStructures();
+        Reporte datos = dataStructures.savingsUser(user, movimientosList);
+        Dialog dialog = new Dialog();
+        dialog.setHeaderTitle("Resumen Financiero");
+        dialog.setWidth("350px");
+
+        VerticalLayout layout = new VerticalLayout();
+        layout.setPadding(false);
+
+        // Totales
+        Span lblSueldo = new Span("Sueldo Inicial: $" + String.format("%.2f", datos.getSueldoInicial()));
+
+        Span lblIngresos = new Span("Otros Ingresos: +$" + String.format("%.2f", datos.getTotalIngresos()));
+        lblIngresos.getStyle().set("color", "#28a745");
+
+        Span lblGastos = new Span("Gastos Totales: -$" + String.format("%.2f", datos.getTotalGastos()));
+        lblGastos.getStyle().set("color", "#ED2100");
+
+        Span lblTotal = new Span("DISPONIBLE: $" + String.format("%.2f", datos.getAhorroDisponible()));
+        lblTotal.getStyle().set("font-weight", "bold").set("font-size", "1.2rem").set("margin-top", "10px");
+
+        layout.add(lblSueldo, lblIngresos, lblGastos, lblTotal);
+
+        // Iteramos los arreglos paralelos para generar el desglose visual
+        if (datos.categorias.length > 0) {
+            H4 subtitulo = new H4("Desglose de Gastos (A-Z)");
+            subtitulo.getStyle().set("color", "#64748B");
+            layout.add(subtitulo);
+
+            for (int i = 0; i < datos.categorias.length; i++) {
+                HorizontalLayout fila = new HorizontalLayout();
+                fila.setWidthFull();
+                fila.setJustifyContentMode(JustifyContentMode.BETWEEN);
+
+                Span nombre = new Span(datos.categorias[i]);
+                Span monto = new Span("$" + String.format("%.2f", datos.montos[i]));
+                monto.getStyle().set("font-weight", "bold");
+
+                fila.add(nombre, monto);
+                layout.add(fila);
+            }
+        }
+
+        dialog.add(layout);
+        dialog.getFooter().add(new Button("Cerrar", e -> dialog.close()));
+        dialog.open();
+    }
 
 }
