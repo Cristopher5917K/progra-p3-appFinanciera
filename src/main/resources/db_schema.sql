@@ -1,9 +1,4 @@
--- Elimina las tablas si existen para un inicio limpio
--- DROP TABLE IF EXISTS metas;
--- DROP TABLE IF EXISTS movimiento;
--- DROP TABLE IF EXISTS cliente;
--- DROP TABLE IF EXISTS usuarios;
-
+-- Crear tablas si no existen (no eliminar datos existentes)
 -- 1. TABLA: usuarios (Información de Login/Perfil)
 CREATE TABLE IF NOT EXISTS usuarios (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -55,5 +50,5 @@ CREATE TABLE IF NOT EXISTS metas (
 );
 
 -- ÍNDICES PARA OPTIMIZACIÓN
--- CREATE INDEX idx_cliente_movimiento ON movimiento(cliente);
--- CREATE INDEX idx_cliente_meta ON metas(id_cliente);
+CREATE INDEX idx_cliente_movimiento ON movimiento(cliente);
+CREATE INDEX idx_cliente_meta ON metas(id_cliente);

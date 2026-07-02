@@ -189,13 +189,21 @@ public class VentanaGastos extends VerticalLayout implements BeforeEnterObserver
         alertText.getStyle().set("font-size", "14px").set("color", "#555").set("display", "block").set("margin-top", "5px");
 
         double topeBarra = gastado > presupuestoMaximo ? presupuestoMaximo : gastado;
-        ProgressBar progressBar = new ProgressBar(0, presupuestoMaximo, topeBarra);
-        progressBar.getStyle().set("margin-top", "10px");
+        ProgressBar progressBar;
+        // Protect against invalid ProgressBar range when presupuestoMaximo is zero or negative
+        if (presupuestoMaximo <= 0) {
+            // Use a safe range [0,1] with value 0 (no progress)
+            progressBar = new ProgressBar(0.0, 1.0, 0.0);
+            progressBar.getStyle().set("margin-top", "10px");
+        } else {
+            progressBar = new ProgressBar(0.0, presupuestoMaximo, topeBarra);
+            progressBar.getStyle().set("margin-top", "10px");
 
-        if (gastado >= presupuestoMaximo) {
-            progressBar.getStyle().set("--lumo-primary-color", "#ED2100");
-        } else if (gastado >= presupuestoMaximo * 0.8) {
-            progressBar.getStyle().set("--lumo-primary-color", "#F5A623");
+            if (gastado >= presupuestoMaximo) {
+                progressBar.getStyle().set("--lumo-primary-color", "#ED2100");
+            } else if (gastado >= presupuestoMaximo * 0.8) {
+                progressBar.getStyle().set("--lumo-primary-color", "#F5A623");
+            }
         }
 
         card.add(titleLayout, alertText, progressBar);
