@@ -1,5 +1,6 @@
 package org.example.pantallas;
 
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -17,6 +18,8 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.progressbar.ProgressBar;
 import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextArea;
+import com.vaadin.flow.router.BeforeEnterEvent;
+import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.VaadinSession;
 import org.example.backend.Conexiones;
@@ -28,95 +31,98 @@ import java.sql.SQLException;
 import java.time.LocalDate;
 
 @Route("gasto")
-public class VentanaGastos extends VerticalLayout {
-    Connection conn = null;
-    public VentanaGastos() {
-        Cliente user = VaadinSession.getCurrent().getAttribute(Cliente.class);
-        Conexiones database = new Conexiones();
+public class VentanaGastos extends VerticalLayout implements BeforeEnterObserver {
+    private Integer idUsuario;
+    private Cliente user;
 
-        try {
-            conn = database.getConnection();
-        } catch (SQLException e){
-            e.printStackTrace();
+    @Override
+    public void beforeEnter(BeforeEnterEvent event) {
+        idUsuario = (Integer) VaadinSession.getCurrent().getAttribute("usuarioId");
+        if (idUsuario == null) {
+            event.rerouteTo("");
+        } else {
+            try (Connection conn = Conexiones.getConnection()) {
+                user = new Conexiones().userInfoById(idUsuario, conn);
+                if (user == null) {
+                    event.rerouteTo("");
+                } else {
+                    createUI();
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+                add(new Span("Error al conectar con la base de datos."));
+            }
         }
+    }
 
+    private void createUI() {
+        removeAll();
+        setAlignItems(Alignment.CENTER);
+        setSizeUndefined();
+        setWidthFull();
+        setWidth("390px");
+        getStyle().set("background-color", "#F8F9FA");
+        getStyle().set("margin", "0 auto");
+        getStyle().set("padding-bottom", "60px");
 
-        if (user == null){
-            UI.getCurrent().navigate("login");
-            return;
-        }
-        // 1. Configuración del fondo general de la aplicación
-        this.setWidthFull();
-        this.setAlignItems(Alignment.CENTER);
-        this.setPadding(false);
-        this.setSpacing(false);
-        this.getStyle().set("background-color", "#F8F9FA");
-        this.getStyle().set("margin", "0 auto");
-        this.getStyle().set("padding-bottom", "60px");
-
-        // ¡LA MAGIA DEL SCROLL!
-        this.getStyle().set("min-height", "100vh");
-        this.getStyle().set("overflow-y", "auto");
-        this.getStyle().set("overflow-x", "hidden");
-
-        // 2. Contenedor principal (Simulando el ancho de un celular)
         VerticalLayout mainContainer = new VerticalLayout();
         mainContainer.setMaxWidth("390px");
         // MEJORA UI/UX: Cambiamos setPadding a true para que los campos no choquen con los bordes de la pantalla
         mainContainer.setPadding(true);
         mainContainer.setSpacing(true);
 
-        // --- CONSTRUCCIÓN DE LAS SECCIONES ---
-
         HorizontalLayout header = crearHeader();
-        double salary = user.getInitialSalary();
-        double expenses = database.sumarGastosDelMes(user.getIdCliente(), conn);
+        
+        double salary = 0;
+        double expenses = 0;
+        try (Connection conn = Conexiones.getConnection()) {
+            salary = user.getInitialSalary();
+            expenses = new Conexiones().sumarGastosDelMes(user.getIdCliente(), conn);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
         Div budgetCard = crearTarjetaPresupuesto(salary, expenses);
 
-        // Campo: Monto del Gasto
         NumberField amountField = new NumberField("MONTO DEL GASTO");
         amountField.setPrefixComponent(new Icon(VaadinIcon.DOLLAR));
         amountField.setPlaceholder("0.00");
         amountField.setWidthFull();
         aplicarEstiloTarjeta(amountField);
 
-        // Campo: Categoría
         ComboBox<String> categoryBox = new ComboBox<>("CATEGORÍA");
         categoryBox.setPlaceholder("Selecciona una categoría");
-        // Aquí puedes cargar las categorías desde tu base de datos
         categoryBox.setItems("Alimentación", "Transporte", "Servicios", "Gasolina");
         categoryBox.setWidthFull();
         aplicarEstiloTarjeta(categoryBox);
 
-        // Campo: Fecha
         DatePicker datePicker = new DatePicker("FECHA");
-        datePicker.setValue(LocalDate.now()); // Fecha por defecto del mockup
+        datePicker.setValue(LocalDate.now());
         datePicker.setWidthFull();
         aplicarEstiloTarjeta(datePicker);
 
-        // Campo: Descripción
         TextArea descriptionArea = new TextArea("DESCRIPCIÓN (OPCIONAL)");
         descriptionArea.setPlaceholder("Ej: Gasolina semanal, almuerzo con clientes...");
         descriptionArea.setWidthFull();
         aplicarEstiloTarjeta(descriptionArea);
 
-        // Botón: Guardar
         Button saveButton = new Button("Guardar gasto", new Icon(VaadinIcon.CHECK));
-        saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_ERROR); // Color rojizo/coral
+        saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_ERROR);
         saveButton.setWidthFull();
         saveButton.getStyle().set("border-radius", "15px");
         saveButton.getStyle().set("padding", "25px");
         saveButton.getStyle().set("margin-top", "10px");
         saveButton.addClickListener(e -> {
-            // 1. Validar que los campos obligatorios no estén vacíos
-            if (amountField.getValue() != null && amountField.getValue() > 0 && categoryBox.getValue() != null && datePicker.getValue() != null) {
-                try {
-                    // Convertir la fecha de Vaadin a SQL
+            if (amountField.getValue() != null && amountField.getValue() > 0
+                    && categoryBox.getValue() != null
+                    && datePicker.getValue() != null) {
+
+                try (Connection conn = Conexiones.getConnection()) {
                     Date sqlDate = Date.valueOf(datePicker.getValue());
                     String categoria = categoryBox.getValue();
                     double monto = amountField.getValue();
 
-                    database.insertarMovimiento(conn, user.getIdCliente(),"GASTO", categoria.toUpperCase(), "UNICO", monto, sqlDate);
+                    new Conexiones().insertarMovimiento(conn, user.getIdCliente(),"GASTO", categoria.toUpperCase(), "UNICO", monto, sqlDate);
                     UI.getCurrent().navigate("dashboard");
                 } catch (Exception ex) {
                     ex.printStackTrace();
@@ -129,12 +135,9 @@ public class VentanaGastos extends VerticalLayout {
             }
         });
 
-        // 3. Agregar todo al contenedor principal y luego a la vista
         mainContainer.add(header, budgetCard, amountField, categoryBox, datePicker, descriptionArea, saveButton);
-        add(mainContainer);
+        add(mainContainer, navigationBar());
     }
-
-    // --- MÉTODOS AUXILIARES PARA MANTENER EL CÓDIGO LIMPIO ---
 
     private HorizontalLayout crearHeader() {
         Button backButton = new Button(new Icon(VaadinIcon.ANGLE_LEFT));
@@ -160,7 +163,7 @@ public class VentanaGastos extends VerticalLayout {
         HorizontalLayout header = new HorizontalLayout(backButton, titleLayout, iconContainer);
         header.setWidthFull();
         header.setAlignItems(Alignment.CENTER);
-        header.expand(titleLayout); // Empuja el icono de dinero a la derecha
+        header.expand(titleLayout);
         return header;
     }
 
@@ -179,23 +182,20 @@ public class VentanaGastos extends VerticalLayout {
         HorizontalLayout titleLayout = new HorizontalLayout(alertIcon, alertTitle);
         titleLayout.setAlignItems(Alignment.CENTER);
 
-        // Cálculos matemáticos reales
         double restante = presupuestoMaximo - gastado;
-        if (restante < 0) restante = 0; // Evitar que muestre números negativos si se pasó
+        if (restante < 0) restante = 0;
 
         Span alertText = new Span("Te quedan $" + String.format("%.2f", restante) + " de tu presupuesto de $" + String.format("%.2f", presupuestoMaximo));
         alertText.getStyle().set("font-size", "14px").set("color", "#555").set("display", "block").set("margin-top", "5px");
 
-        // Configuración de la barra de progreso
         double topeBarra = gastado > presupuestoMaximo ? presupuestoMaximo : gastado;
         ProgressBar progressBar = new ProgressBar(0, presupuestoMaximo, topeBarra);
         progressBar.getStyle().set("margin-top", "10px");
 
-        // Cambiar color si ya se pasó del límite
         if (gastado >= presupuestoMaximo) {
-            progressBar.getStyle().set("--lumo-primary-color", "#ED2100"); // Rojo
+            progressBar.getStyle().set("--lumo-primary-color", "#ED2100");
         } else if (gastado >= presupuestoMaximo * 0.8) {
-            progressBar.getStyle().set("--lumo-primary-color", "#F5A623"); // Naranja
+            progressBar.getStyle().set("--lumo-primary-color", "#F5A623");
         }
 
         card.add(titleLayout, alertText, progressBar);
@@ -207,5 +207,45 @@ public class VentanaGastos extends VerticalLayout {
         component.getStyle().set("border-radius", "15px");
         component.getStyle().set("padding", "15px");
         component.getStyle().set("box-shadow", "0 2px 8px rgba(0,0,0,0.04)");
+    }
+
+    private Component navigationBar(){
+        HorizontalLayout icons = new HorizontalLayout();
+        icons.setHeight("60px");
+        icons.getStyle().set("position", "fixed");
+        icons.getStyle().set("bottom", "0");
+        icons.getStyle().set("left", "50%");
+        icons.getStyle().set("transform", "translateX(-50%)");
+        icons.getStyle().set("width", "100%");
+        icons.getStyle().set("max-width", "390px");
+
+        icons.getStyle().set("background-color", "var(--lumo-base-color)");
+        icons.getStyle().set("border-top", "1px solid var(--lumo-contrast-10pct)");
+        icons.getStyle().set("z-index", "100");
+
+        icons.setJustifyContentMode(JustifyContentMode.EVENLY);
+        icons.setVerticalComponentAlignment(Alignment.CENTER);
+
+        Icon home = VaadinIcon.HOME_O.create();
+        Icon expenses = VaadinIcon.WALLET.create();
+        Icon incomes = VaadinIcon.MONEY.create();
+        Icon goals = VaadinIcon.BULLSEYE.create();
+        Icon user = VaadinIcon.USER.create();
+
+        Icon[] icon = {home, expenses, incomes, goals, user};
+        for(Icon image : icon){
+            image.setColor("#A0AEC0");
+            image.setSize("24px");
+            image.getStyle().set("cursor", "pointer");
+        }
+
+        expenses.setColor("#28a745");
+        home.addClickListener(e -> UI.getCurrent().navigate("dashboard"));
+        goals.addClickListener(e -> UI.getCurrent().navigate("metas"));
+        incomes.addClickListener(e -> UI.getCurrent().navigate("ingreso"));
+        user.addClickListener(e -> UI.getCurrent().navigate("perfil"));
+
+        icons.add(home, expenses, incomes, goals, user);
+        return icons;
     }
 }

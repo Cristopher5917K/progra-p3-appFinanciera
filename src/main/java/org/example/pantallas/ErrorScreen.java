@@ -1,5 +1,6 @@
 package org.example.pantallas;
 
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -22,7 +23,7 @@ public class ErrorScreen extends  VerticalLayout{
 
         Button back_login = new Button("Volver");
         back_login.addThemeName("primary");
-
+        back_login.addClickListener(event -> UI.getCurrent().navigate(""));
         add(errorMessage, back_login);
 
 
