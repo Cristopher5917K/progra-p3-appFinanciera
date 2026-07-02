@@ -43,11 +43,13 @@ public class MetasView extends VerticalLayout {
 
     public MetasView() {
         Cliente user = VaadinSession.getCurrent().getAttribute(Cliente.class);
+        if (user == null) {
+            UI.getCurrent().navigate("login");
+            return;
+        }
+
         try {
-            idUsuario = (Integer) VaadinSession.getCurrent().getAttribute("usuarioId");
-            if (idUsuario == null) {
-                idUsuario = 1; // Fallback to user 1 if not in session
-            }
+            idUsuario = user.getIdCliente();
             createUI();
         } catch (Exception e) {
             add(new Span("Error al cargar la vista de metas: " + e.getMessage()));
@@ -82,9 +84,9 @@ public class MetasView extends VerticalLayout {
         // Header
         header = new VerticalLayout();
         header.getStyle().set("background", "linear-gradient(160deg, #0D2B55 0%, #1a4a8a 100%)");
-        header.getStyle().set("padding-bottom", "16px");
+        header.getStyle().set("padding-bottom", "14px");
         header.setWidthFull();
-        header.setPadding(false);
+        header.setPadding(true);
         header.setSpacing(true);
 
         H1 title = new H1("Mis Metas");

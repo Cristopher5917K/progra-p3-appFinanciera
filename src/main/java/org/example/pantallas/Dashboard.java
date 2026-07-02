@@ -481,4 +481,6 @@ public class Dashboard extends VerticalLayout {
         ventanaSueldo.open();
     }
 
+    
+
 }

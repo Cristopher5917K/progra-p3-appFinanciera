@@ -51,13 +51,19 @@ public class VentanaGastos extends VerticalLayout {
         this.setPadding(false);
         this.setSpacing(false);
         this.getStyle().set("background-color", "#F8F9FA");
-        getStyle().set("margin", "0 auto");
-        getStyle().set("padding-bottom", "60px"); // Fondo azul muy claro similar al Figma
+        this.getStyle().set("margin", "0 auto");
+        this.getStyle().set("padding-bottom", "60px");
+
+        // ¡LA MAGIA DEL SCROLL!
+        this.getStyle().set("min-height", "100vh");
+        this.getStyle().set("overflow-y", "auto");
+        this.getStyle().set("overflow-x", "hidden");
 
         // 2. Contenedor principal (Simulando el ancho de un celular)
         VerticalLayout mainContainer = new VerticalLayout();
         mainContainer.setMaxWidth("390px");
-        mainContainer.setPadding(false);
+        // MEJORA UI/UX: Cambiamos setPadding a true para que los campos no choquen con los bordes de la pantalla
+        mainContainer.setPadding(true);
         mainContainer.setSpacing(true);
 
         // --- CONSTRUCCIÓN DE LAS SECCIONES ---
@@ -84,7 +90,7 @@ public class VentanaGastos extends VerticalLayout {
 
         // Campo: Fecha
         DatePicker datePicker = new DatePicker("FECHA");
-        datePicker.setValue(LocalDate.of(2025, 5, 3)); // Fecha por defecto del mockup
+        datePicker.setValue(LocalDate.now()); // Fecha por defecto del mockup
         datePicker.setWidthFull();
         aplicarEstiloTarjeta(datePicker);
 

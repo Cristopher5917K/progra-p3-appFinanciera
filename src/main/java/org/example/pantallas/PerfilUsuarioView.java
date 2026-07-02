@@ -4,6 +4,8 @@ import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.H4;
 import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.server.VaadinSession;
+import io.netty.channel.epoll.VSockAddress;
 import org.example.backend.Conexiones;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.H2;
@@ -14,6 +16,7 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.Route;
+import org.example.info.Cliente;
 
 import java.sql.Connection;
 import java.util.Map;
@@ -42,11 +45,14 @@ public class PerfilUsuarioView extends VerticalLayout {
     private HorizontalLayout botonesAccion;
 
     public PerfilUsuarioView() {
-        this.setSizeFull();
+        this.setWidthFull();
         this.setAlignItems(Alignment.CENTER);
         this.setPadding(false);
         this.setSpacing(false);
         this.getStyle().set("background-color", "#F8F9FA");
+        this.getStyle().set("min-height", "100vh");
+        this.getStyle().set("overflow-y", "auto");
+        this.getStyle().set("overflow-x", "hidden");
         VerticalLayout container = new VerticalLayout();
         container.setWidth("100%");
         container.setPadding(false);
@@ -81,12 +87,16 @@ public class PerfilUsuarioView extends VerticalLayout {
         String cedula="";
         String correo="";
         double sueldo=0.0;
+        Cliente user = VaadinSession.getCurrent().getAttribute(Cliente.class);
+
+        if (user == null){
+            UI.getCurrent().navigate("login");
+            return;
+        }
 
         try{
-            idUsuario = (Integer) com.vaadin.flow.server.VaadinSession.getCurrent().getAttribute("usuarioId");
-            if (idUsuario == null) {
-                idUsuario = 1;
-            }
+            int idUsuario = user.getIdCliente();
+
             con = Conexiones.getConnection();
             Map<String, Object> profile = new Conexiones().userProfileInfo(idUsuario, con);
             
@@ -216,133 +226,13 @@ public class PerfilUsuarioView extends VerticalLayout {
             containerActividad.add(tituloActividad);
 
             // Sección de Metas
-            VerticalLayout containerMetas = new VerticalLayout();
-            containerMetas.setWidth("100%");
-            containerMetas.getStyle().set("background-color", "white");
-            containerMetas.getStyle().set("border-radius", "15px");
-            containerMetas.getStyle().set("cursor", "pointer");
-            containerMetas.getStyle().set("transition", "background-color 0.3s");
-            containerMetas.addClickListener(e -> UI.getCurrent().navigate("metas"));
-            containerMetas.getElement().addEventListener("mouseover", e -> {
-                containerMetas.getStyle().set("background-color", "#F0F0F0");
-            });
-            containerMetas.getElement().addEventListener("mouseout", e -> {
-                containerMetas.getStyle().set("background-color", "white");
-            });
-
-            Icon iconMetas = VaadinIcon.BULLSEYE.create();
-            iconMetas.getStyle().set("color", "black");
-            iconMetas.getStyle().set("font-size", "24px");
-
-            H3 tituloMetas = new H3("METAS");
-            tituloMetas.getStyle().set("color", "black");
-            tituloMetas.getStyle().set("margin", "0");
-
-            HorizontalLayout contentMetas = new HorizontalLayout(iconMetas, tituloMetas);
-            contentMetas.setAlignItems(Alignment.CENTER);
-            contentMetas.setJustifyContentMode(JustifyContentMode.EVENLY);
-            contentMetas.setSpacing(true);
-            contentMetas.getStyle().set("margin", "auto");
-
-            containerMetas.add(contentMetas);
-            containerActividad.add(containerMetas);
-            container.add(containerActividad);
-
-            VerticalLayout containerDashboard = new VerticalLayout();
-            containerDashboard.setWidth("100%");
-            containerDashboard.getStyle().set("background-color", "white");
-            containerDashboard.getStyle().set("border-radius", "15px");
-            containerDashboard.getStyle().set("cursor", "pointer");
-            containerDashboard.getStyle().set("transition", "background-color 0.3s");
-            containerDashboard.addClickListener(e -> UI.getCurrent().navigate("dashboard"));
-            containerDashboard.getElement().addEventListener("mouseover", e -> {
-                containerDashboard.getStyle().set("background-color", "#F0F0F0");
-            });
-            containerDashboard.getElement().addEventListener("mouseout", e -> {
-                containerDashboard.getStyle().set("background-color", "white");
-            });
-
-            Icon iconDashboard = VaadinIcon.HOME_O.create();
-            iconMetas.getStyle().set("color", "black");
-            iconMetas.getStyle().set("font-size", "24px");
-
-            H3 titleDashboard = new H3("DASHBOARD");
-            titleDashboard.getStyle().set("color", "black");
-            titleDashboard.getStyle().set("margin", "0");
-
-            HorizontalLayout contentDashboard = new HorizontalLayout(iconDashboard, titleDashboard);
-            contentDashboard.setAlignItems(Alignment.CENTER);
-            contentDashboard.setJustifyContentMode(JustifyContentMode.EVENLY);
-            contentDashboard.setSpacing(true);
-            contentDashboard.getStyle().set("margin", "auto");
-
-            containerDashboard.add(contentDashboard);
-            containerActividad.add(containerDashboard);
-            container.add(containerDashboard);
-
-            VerticalLayout containerExpenses = new VerticalLayout();
-            containerExpenses.setWidth("100%");
-            containerExpenses.getStyle().set("background-color", "white");
-            containerExpenses.getStyle().set("border-radius", "15px");
-            containerExpenses.getStyle().set("cursor", "pointer");
-            containerExpenses.getStyle().set("transition", "background-color 0.3s");
-            containerExpenses.addClickListener(e -> UI.getCurrent().navigate("gasto"));
-            containerExpenses.getElement().addEventListener("mouseover", e -> {
-                containerExpenses.getStyle().set("background-color", "#F0F0F0");
-            });
-            containerExpenses.getElement().addEventListener("mouseout", e -> {
-                containerExpenses.getStyle().set("background-color", "white");
-            });
-
-            Icon iconExpenses = VaadinIcon.WALLET.create();
-            iconExpenses.getStyle().set("color", "black");
-            iconExpenses.getStyle().set("font-size", "24px");
-
-            H3 titleExpense = new H3("GASTOS");
-            titleExpense.getStyle().set("color", "black");
-            titleExpense.getStyle().set("margin", "0");
-
-            HorizontalLayout contentExpenses = new HorizontalLayout(iconExpenses, titleExpense);
-            contentExpenses.setAlignItems(Alignment.CENTER);
-            contentExpenses.setJustifyContentMode(JustifyContentMode.EVENLY);
-            contentExpenses.setSpacing(true);
-            contentExpenses.getStyle().set("margin", "auto");
-
-            containerExpenses.add(contentExpenses);
-            containerActividad.add(containerExpenses);
-            container.add(containerExpenses);
-
-            VerticalLayout containerIncome = new VerticalLayout();
-            containerIncome.setWidth("100%");
-            containerIncome.getStyle().set("background-color", "white");
-            containerIncome.getStyle().set("border-radius", "15px");
-            containerIncome.getStyle().set("cursor", "pointer");
-            containerIncome.getStyle().set("transition", "background-color 0.3s");
-            containerIncome.addClickListener(e -> UI.getCurrent().navigate("ingreso"));
-            containerIncome.getElement().addEventListener("mouseover", e -> {
-                containerIncome.getStyle().set("background-color", "#F0F0F0");
-            });
-            containerIncome.getElement().addEventListener("mouseout", e -> {
-                containerIncome.getStyle().set("background-color", "white");
-            });
-
-            Icon iconIncome = VaadinIcon.MONEY.create();
-            iconMetas.getStyle().set("color", "black");
-            iconMetas.getStyle().set("font-size", "24px");
-
-            H3 titleIncome = new H3("INGRESOS");
-            titleIncome.getStyle().set("color", "black");
-            titleIncome.getStyle().set("margin", "0");
-
-            HorizontalLayout contentIncomes = new HorizontalLayout(iconIncome, titleIncome);
-            contentIncomes.setAlignItems(Alignment.CENTER);
-            contentIncomes.setJustifyContentMode(JustifyContentMode.EVENLY);
-            contentIncomes.setSpacing(true);
-            contentIncomes.getStyle().set("margin", "auto");
-
-            containerIncome.add(contentIncomes);
-            containerActividad.add(containerIncome);
-            container.add(containerIncome);
+            container.add(
+                    containerActividad,
+                    crearBotonActividad("DASHBOARD", VaadinIcon.HOME_O, "dashboard"),
+                    crearBotonActividad("GASTOS", VaadinIcon.WALLET, "gasto"),
+                    crearBotonActividad("INGRESOS", VaadinIcon.MONEY, "ingreso"),
+                    crearBotonActividad("METAS", VaadinIcon.BULLSEYE, "metas")
+            );
 
             this.add(container);
 
@@ -350,6 +240,48 @@ public class PerfilUsuarioView extends VerticalLayout {
             add(new Span("Error al conectar a la base de datos: " + e.getMessage()));
             e.printStackTrace();
         }
+    }
+
+    private VerticalLayout crearBotonActividad(String titulo, VaadinIcon iconType, String ruta) {
+        VerticalLayout boton = new VerticalLayout();
+        boton.setWidth("100%");
+        boton.getStyle().set("background-color", "white");
+        boton.getStyle().set("border-radius", "15px");
+        boton.getStyle().set("cursor", "pointer");
+        boton.getStyle().set("transition", "background-color 0.3s");
+        boton.setPadding(true);
+
+        // Efectos de Hover (sombra al pasar el mouse/dedo)
+        boton.getElement().addEventListener("mouseover", e -> boton.getStyle().set("background-color", "#F0F0F0"));
+        boton.getElement().addEventListener("mouseout", e -> boton.getStyle().set("background-color", "white"));
+
+        // Navegación
+        boton.addClickListener(e -> UI.getCurrent().navigate(ruta));
+
+        // --- EL TRUCO DE LA ALINEACIÓN ---
+
+        Icon icono = iconType.create();
+        icono.getStyle().set("color", "black");
+        icono.setSize("24px");
+        // 1. Obligamos al ícono a ocupar exactamente 45px de ancho, sin encogerse
+        icono.getElement().getStyle().set("width", "45px");
+        icono.getElement().getStyle().set("flex-shrink", "0");
+
+        H3 texto = new H3(titulo);
+        texto.getStyle().set("color", "black");
+        texto.getStyle().set("margin", "0");
+        texto.getStyle().set("font-size", "1.1rem");
+
+        HorizontalLayout contenido = new HorizontalLayout(icono, texto);
+        contenido.setWidthFull();
+        contenido.setAlignItems(Alignment.CENTER);
+        // 2. Empujamos todo hacia la izquierda
+        contenido.setJustifyContentMode(JustifyContentMode.START);
+        // 3. Le damos un margen interno para que no quede pegado al borde izquierdo del celular
+        contenido.getStyle().set("padding-left", "25px");
+
+        boton.add(contenido);
+        return boton;
     }
 
     private void toggleModoEdicion(boolean editar) {
