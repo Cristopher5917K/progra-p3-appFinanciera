@@ -40,6 +40,31 @@ public class Conexiones {
         return connection;
     }
 
+    /**
+     * Ensure the configured database exists. If the database part of the DB URL is missing on the server,
+     * this will connect to the server and create the database if needed.
+     */
+    public static void ensureDatabaseExists() throws SQLException {
+        if (URL == null || USER == null || PASSWORD == null) {
+            throw new SQLException("Variables de entorno no configuradas. Verifica el archivo .env");
+        }
+        // Parse DB name from URL (e.g. jdbc:mysql://host:port/dbname?params)
+        String clean = URL;        int q = clean.indexOf('?');
+        if (q >= 0) clean = clean.substring(0, q);
+        int lastSlash = clean.lastIndexOf('/');
+        if (lastSlash < 0 || lastSlash == clean.length() - 1) {
+            return; // no DB specified
+        }
+        String dbName = clean.substring(lastSlash + 1);
+        String serverUrl = clean.substring(0, lastSlash + 1); // ends with '/'
+        // connect to server without specifying database
+        try (Connection conn = DriverManager.getConnection(serverUrl, USER, PASSWORD);
+             Statement stmt = conn.createStatement()) {
+            String sql = "CREATE DATABASE IF NOT EXISTS `" + dbName + "` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci";
+            stmt.execute(sql);
+        }
+    }
+
     public void registerClient(Connection conn, String name, String apellido, String cedula, double sueldo, String password){
         String addUser = "INSERT INTO cliente (name_cliente, apellido_cliente, password, cedula, initial_salary) VALUES (?,?,?,?,?)";
 
@@ -93,22 +118,28 @@ public class Conexiones {
     }
 
     public Cliente userLogin(String correo, String password, Connection conn){
-        String sqlSearch = "SELECT * FROM cliente WHERE password = ?";
+        // First locate the user in 'usuarios' by correo+contrasena to get the cedula,
+        // then find the matching record in 'cliente' (which holds id_cliente used across the app).
+        String sqlUsuarios = "SELECT cedula FROM usuarios WHERE correo = ? AND contrasena = ?";
+        String sqlClienteByCedula = "SELECT * FROM cliente WHERE cedula = ?";
 
         try {
-            PreparedStatement search = conn.prepareStatement(sqlSearch);
-            search.setString(1, password);
+            PreparedStatement pUsu = conn.prepareStatement(sqlUsuarios);
+            pUsu.setString(1, correo);
+            pUsu.setString(2, password);
+            ResultSet rsUsu = pUsu.executeQuery();
 
-            ResultSet success = search.executeQuery();
-            if (success.next()){
-                return new Cliente(
-                        success.getInt("id_cliente"),
-                        success.getString("name_cliente"),
-                        success.getString("apellido_cliente"),
-                        success.getString("password"),
-                        success.getString("cedula"),
-                        success.getDouble("initial_salary")
-                );
+            if (rsUsu.next()){
+                String cedula = rsUsu.getString("cedula");
+                PreparedStatement pCli = conn.prepareStatement(sqlClienteByCedula);
+                pCli.setString(1, cedula);
+                ResultSet rsCli = pCli.executeQuery();
+                if (rsCli.next()){
+                    return clienteFromResultSet(rsCli);
+                } else {
+                    // Cliente record not found — return null so login fails and the UI shows an error.
+                    return null;
+                }
             }
         } catch (Exception e){
             e.printStackTrace();
@@ -117,11 +148,8 @@ public class Conexiones {
     }
 
     public Cliente userInfoById(int idUsuario, Connection conn){
-        Cliente user = getUserByIdHelper(idUsuario, conn);
-        if (user == null) {
-            user = getUserByIdHelper(1, conn);
-        }
-        return user;
+        // Return the requested cliente or null if not found (do not fallback to id 1)
+        return getUserByIdHelper(idUsuario, conn);
     }
 
     private Cliente getUserByIdHelper(int idUsuario, Connection conn) {
@@ -153,11 +181,8 @@ public class Conexiones {
     }
 
     public Map<String, Object> userProfileInfo(int idUsuario, Connection conn){
-        Map<String, Object> profile = getUserProfileHelper(idUsuario, conn);
-        if (profile == null) {
-            profile = getUserProfileHelper(1, conn);
-        }
-        return profile;
+        // Return profile for requested user or null if not found (no fallback)
+        return getUserProfileHelper(idUsuario, conn);
     }
 
     private Map<String, Object> getUserProfileHelper(int idUsuario, Connection conn) {
@@ -277,11 +302,8 @@ public class Conexiones {
     }
 
     public Cliente userInfoByIdFromUsuarios(int idUsuario, Connection conn){
-        Cliente user = getUserFromUsuariosHelper(idUsuario, conn);
-        if (user == null) {
-            user = getUserFromUsuariosHelper(1, conn);
-        }
-        return user;
+        // Return usuarios-based Cliente or null if not found (no fallback to id 1)
+        return getUserFromUsuariosHelper(idUsuario, conn);
     }
 
     private Cliente getUserFromUsuariosHelper(int idUsuario, Connection conn) {
@@ -477,3 +499,4 @@ public class Conexiones {
         }
     }
 }
+

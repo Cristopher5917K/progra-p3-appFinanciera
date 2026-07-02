@@ -6,8 +6,8 @@ import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.H4;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.server.VaadinSession;
-import io.netty.channel.epoll.VSockAddress;
 import org.example.backend.Conexiones;
+import org.example.info.Cliente;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Span;
@@ -22,7 +22,7 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.VaadinSession;
 
 import java.sql.Connection;
-import java.util.Map;
+import java.sql.SQLException;
 
 @Route("perfil")
 public class PerfilUsuarioView extends VerticalLayout implements BeforeEnterObserver {
@@ -106,24 +106,23 @@ public class PerfilUsuarioView extends VerticalLayout implements BeforeEnterObse
         String cedula="";
         String correo="";
         double sueldo=0.0;
-        Cliente user = VaadinSession.getCurrent().getAttribute(Cliente.class);
-
-        if (user == null){
-            UI.getCurrent().navigate("login");
-            return;
-        }
 
         try{
             con = Conexiones.getConnection();
-            Map<String, Object> profile = new Conexiones().userProfileInfo(idUsuario, con);
-            
-            if (profile != null){
-                nombre = (String) profile.get("nombre");
-                apellido = (String) profile.get("apellido");
-                cedula = (String) profile.get("cedula");
-                correo = (String) profile.getOrDefault("correo", "");
-                sueldo = (Double) profile.get("sueldo");
+            // Load cliente data by idUsuario (id_cliente stored in session)
+            Cliente cliente = new Conexiones().userInfoById(idUsuario, con);
+
+            if (cliente == null){
+                UI.getCurrent().navigate("login");
+                return;
             }
+
+            nombre = cliente.getNameCliente();
+            apellido = cliente.getApellidoCliente();
+            cedula = cliente.getCedula();
+            correo = ""; // correo lives in 'usuarios' table; optional to fetch it later
+            sueldo = cliente.getInitialSalary();
+        
 
             String inicialNombre = (nombre != null && !nombre.isEmpty()) ? nombre.substring(0,1).toUpperCase() : "";
             String inicialApellido = (apellido != null && !apellido.isEmpty()) ? apellido.substring(0,1).toUpperCase() : "";

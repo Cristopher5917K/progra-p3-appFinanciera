@@ -27,6 +27,7 @@ import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.ArrayList;
 
 @Route("dashboard")
 public class Dashboard extends VerticalLayout implements BeforeEnterObserver {
@@ -72,10 +73,25 @@ public class Dashboard extends VerticalLayout implements BeforeEnterObserver {
         VerticalLayout mainContainer = new VerticalLayout();
         mainContainer.setPadding(true);
         mainContainer.setSpacing(true);
+
+        // Fetch movements and totals for the user
+        List<Movimientos> movements = new ArrayList<>();
+        double totalGastos = 0.0;
+        try (Connection conn = Conexiones.getConnection()) {
+            Conexiones database = new Conexiones();
+            List<Movimientos> ingresos = database.movements("INGRESO", user.getIdCliente(), conn);
+            List<Movimientos> gastos = database.movements("GASTO", user.getIdCliente(), conn);
+            if (ingresos != null) movements.addAll(ingresos);
+            if (gastos != null) movements.addAll(gastos);
+            totalGastos = database.sumarGastosDelMes(user.getIdCliente(), conn);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
         mainContainer.add(
                 generateScroll(user, movements),
                 generatePercentage(user.getInitialSalary(), 1800),
-                recommendationsCards(user.getInitialSalary(),database.sumarGastosDelMes(user.getIdCliente(), conn)),
+                recommendationsCards(user.getInitialSalary(), totalGastos),
                 crearTarjetasMovimientos()
         );
 
@@ -131,6 +147,40 @@ public class Dashboard extends VerticalLayout implements BeforeEnterObserver {
         return carousel;
     }
 
+    // Open a simple dialog listing movements (both ingresos y gastos)
+    private void abrirVentanaReporte(Cliente user, List<Movimientos> movements) {
+        Dialog ventana = new Dialog();
+        ventana.setHeaderTitle("Movimientos de " + user.getNameCliente());
+
+        VerticalLayout lista = new VerticalLayout();
+        if (movements == null || movements.isEmpty()) {
+            lista.add(new Span("No hay movimientos registrados."));
+        } else {
+            for (Movimientos m : movements) {
+                HorizontalLayout row = new HorizontalLayout();
+                row.setWidthFull();
+                Span desc = new Span(m.getCategoria() + " (" + m.getTipoMovimiento() + ")");
+                Span val = new Span((m.getTipoMovimiento().equalsIgnoreCase("INGRESO") ? "+" : "-") + String.format("$%,.2f", m.getMonto()));
+                val.getStyle().set("font-weight", "bold");
+                row.add(desc, val);
+                lista.add(row);
+            }
+        }
+
+        ventana.add(lista);
+        Button close = new Button("Cerrar", e -> ventana.close());
+        ventana.getFooter().add(close);
+        ventana.open();
+    }
+
+    private void graphicMovements(Cliente user, List<Movimientos> movements) {
+        Dialog ventana = new Dialog();
+        ventana.setHeaderTitle("Gráfico de movimientos (simulado)");
+        ventana.add(new Span("Aquí iría el gráfico. Movimientos totales: " + (movements == null ? 0 : movements.size())));
+        Button close = new Button("Cerrar", e -> ventana.close());
+        ventana.getFooter().add(close);
+        ventana.open();
+    }
     private VerticalLayout cardTemplate(){
         VerticalLayout template = new VerticalLayout();
         template.setWidthFull();
