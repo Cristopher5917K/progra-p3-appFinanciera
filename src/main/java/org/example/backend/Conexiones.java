@@ -228,14 +228,14 @@ public class Conexiones {
         return 0.0; // Si no hay gastos, devuelve 0
     }
 
-    public List<Movimientos> movements(String tipo, Connection conn){
-        String sql = "SELECT * FROM movimiento WHERE tipo_movimiento = ?";
+    public List<Movimientos> movements(int idClient, Connection conn){
+        String sql = "SELECT * FROM movimiento WHERE cliente = ?";
 
         List<Movimientos> info = new ArrayList<>();
 
         try{
             PreparedStatement data = conn.prepareStatement(sql);
-            data.setString(1, tipo);
+            data.setInt(1, idClient);
 
             ResultSet search =  data.executeQuery();
             while (search.next()){

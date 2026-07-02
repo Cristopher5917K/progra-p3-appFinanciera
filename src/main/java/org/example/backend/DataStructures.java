@@ -2,11 +2,10 @@ package org.example.backend;
 
 import org.example.info.Cliente;
 import org.example.info.Movimientos;
+import org.example.info.Reporte;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeSet;
+import java.sql.Connection;
+import java.util.*;
 
 public class DataStructures {
     /**Métodos propios del desarrollador*/
@@ -30,7 +29,7 @@ public class DataStructures {
         for (Movimientos mov : movements){
             if ("INGRESO".equalsIgnoreCase(mov.getTipoMovimiento())){
                 totalIncomes +=mov.getMonto();
-            } else if ("GASTOS".equalsIgnoreCase(mov.getTipoMovimiento())){
+            } else if ("GASTO".equalsIgnoreCase(mov.getTipoMovimiento())){
                 totalExpenses += mov.getMonto();
             }
         }
@@ -45,5 +44,38 @@ public class DataStructures {
         return distribution;
     }
 
-    
+    public Reporte savingsUser (Cliente user, List<Movimientos> movements){
+        Reporte data = new Reporte();
+        data.setSueldoInicial(user.getInitialSalary());
+        HashMap<String, Double> total = (HashMap<String, Double>) calculateDistribution(user, movements);
+
+        TreeMap<String, Double> filter = new TreeMap<>();
+        double extraIncome = 0;
+        for (Movimientos mov : movements){
+            if ("GASTO".equalsIgnoreCase(mov.getTipoMovimiento())){
+                String expenseCategory = mov.getCategoria();
+                filter.put(expenseCategory, filter.getOrDefault(expenseCategory, 0.0) + mov.getMonto());
+            } else if ("INGRESO".equalsIgnoreCase(mov.getTipoMovimiento())){
+                extraIncome+= mov.getMonto();
+            }
+        }
+
+        data.setTotalIngresos(extraIncome);
+        data.setTotalGastos(total.get("Gastos"));
+        data.setAhorroDisponible(total.get("Ahorros Disponibles"));
+
+
+        int size = filter.size();
+        data.categorias = new String[size];
+        data.montos = new double[size];
+
+        int index = 0;
+        for(Map.Entry<String, Double> entrada : filter.entrySet()){
+            data.categorias[index] = entrada.getKey();
+            data.montos[index] = entrada.getValue();
+            index++;
+        }
+
+        return data;
+    }
 }

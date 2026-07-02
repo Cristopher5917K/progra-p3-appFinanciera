@@ -21,11 +21,10 @@ public class Register extends VerticalLayout{
         this.setSizeFull();
         this.setAlignItems(Alignment.CENTER);
 
-
         VerticalLayout seccionSuperior = new VerticalLayout();
         seccionSuperior.setWidthFull(); // Ocupa todo el ancho
         seccionSuperior.setHeight("45vh"); // Ocupa el 45% de la altura de la pantalla
-        seccionSuperior.setPadding(true);
+        seccionSuperior.setPadding(false);
         seccionSuperior.setAlignItems(Alignment.CENTER);
         seccionSuperior.setJustifyContentMode(JustifyContentMode.CENTER); // Centra logo y textos verticalmente
 

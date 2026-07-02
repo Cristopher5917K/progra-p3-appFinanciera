@@ -126,7 +126,7 @@ public class Login extends VerticalLayout {
         });
 
         btadmin_panel.addClickListener(event -> {
-            getUI().ifPresent(ui -> ui.navigate(""));
+            getUI().ifPresent(ui -> ui.navigate("admin"));
         });
     }
 
