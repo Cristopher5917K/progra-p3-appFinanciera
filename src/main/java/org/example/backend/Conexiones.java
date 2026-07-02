@@ -16,10 +16,8 @@ import java.util.Map;
 
 public class Conexiones {
 
-    // Cargar el archivo .env
     private static final Dotenv dotenv = Dotenv.load();
 
-    // Leer las variables del archivo
     private static final String URL = dotenv != null ? dotenv.get("DB_URL") : null;
     private static final String USER = dotenv != null ? dotenv.get("DB_USER") : null;
     private static final String PASSWORD = dotenv != null ? dotenv.get("DB_PASSWORD") : null;
@@ -71,7 +69,7 @@ public class Conexiones {
     }
 
     public void registerUser(Connection conn, String name, String apellido, String correo, String password, double sueldo, String cedula){
-        String sql = "INSERT INTO usuarios (nombre, apellido, correo, contrasena, sueldo, cedula) VALUES (?,?,?,?,?,?,?)";
+        String sql = "INSERT INTO usuarios (nombre, apellido, correo, contrasena, sueldo, cedula) VALUES (?,?,?,?,?,?)";
 
         try {
             PreparedStatement data = conn.prepareStatement(sql);
@@ -311,11 +309,10 @@ public class Conexiones {
 
             int result = update.executeUpdate();
             if (result > 0) {
-                System.out.println("✅ Usuario actualizado exitosamente");
                 return true;
             }
         } catch (Exception e) {
-            System.out.println("❌ Error al actualizar usuario: " + e.getMessage());
+            System.out.println("Error al actualizar usuario: " + e.getMessage());
             e.printStackTrace();
         }
         return false;
@@ -347,7 +344,7 @@ public class Conexiones {
         try {
             if (nombre.isEmpty() || apellido.isEmpty() || cedula.isEmpty()) {
                 resultado.put("success", false);
-                resultado.put("message", "⚠️ Completa todos los campos");
+                resultado.put("message", "Completa todos los campos");
                 return resultado;
             }
 
@@ -356,27 +353,25 @@ public class Conexiones {
 
             if (actualizado) {
                 resultado.put("success", true);
-                resultado.put("message", "✅ Perfil actualizado exitosamente");
+                resultado.put("message", "Perfil actualizado exitosamente");
                 resultado.put("nombre", nombre);
                 resultado.put("apellido", apellido);
                 resultado.put("cedula", cedula);
                 resultado.put("sueldo", sueldoNumerico);
             } else {
                 resultado.put("success", false);
-                resultado.put("message", "❌ Error al guardar cambios");
+                resultado.put("message", "Error al guardar cambios");
             }
         } catch (NumberFormatException e) {
             resultado.put("success", false);
-            resultado.put("message", "❌ El sueldo debe ser un número válido");
+            resultado.put("message", "El sueldo debe ser un número válido");
         } catch (Exception e) {
             resultado.put("success", false);
-            resultado.put("message", "❌ Error: " + e.getMessage());
+            resultado.put("message", "Error: " + e.getMessage());
         }
         
         return resultado;
     }
-
-    // --- Métodos para Metas ---
 
     public List<Meta> getMetasByUsuario(int idUsuario, Connection conn) {
         List<Meta> metas = new ArrayList<>();
