@@ -99,7 +99,7 @@ public class Login extends VerticalLayout implements BeforeEnterObserver {
             Conexiones database = new Conexiones();
             Connection conn = null;
             Cliente user = null;
-            String correo = txtflogin.getValue();
+            String correo = txtflogin.getValue().toLowerCase().trim();
             String contrasena = txtfpassword.getValue();
 
             try {
@@ -107,7 +107,14 @@ public class Login extends VerticalLayout implements BeforeEnterObserver {
                 user =  database.userLogin(correo, contrasena, conn);
                 if (user != null){
                     VaadinSession.getCurrent().setAttribute("usuarioId", user.getIdCliente());
-                    getUI().ifPresent(ui -> ui.navigate("perfil"));
+                    VaadinSession.getCurrent().setAttribute("correo", correo);
+
+                    if (correo.equals("admin@midominio.com")) {
+                        getUI().ifPresent(ui -> ui.navigate("admin"));
+                    } else {
+                        getUI().ifPresent(ui -> ui.navigate("dashboard"));
+                    }
+
                 } else {
                     getUI().ifPresent(ui -> ui.navigate("noUser"));
                 }

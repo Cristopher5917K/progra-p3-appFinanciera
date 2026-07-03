@@ -1,7 +1,7 @@
 package org.example.pantallas;
 
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.H3;
@@ -10,29 +10,71 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.router.BeforeEnterEvent;
+import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.server.VaadinSession;
+import org.example.backend.Conexiones;
+
+import java.sql.Connection;
+import java.sql.SQLException;
 
 @Route("admin")
-public class AdminPanel extends VerticalLayout {
+public class AdminPanel extends VerticalLayout implements BeforeEnterObserver {
 
     private final VerticalLayout areaContenido;
+
+    @Override
+    public void beforeEnter(BeforeEnterEvent event) {
+        String correoUsuario = (String) VaadinSession.getCurrent().getAttribute("correo");
+        String correoAdmin = "admin@midominio.com";
+        // Solo deja pasar si el correo es exactamente el tuyo
+        if (correoUsuario == null || !correoUsuario.equals(correoAdmin)) {
+            event.rerouteTo("");
+        }
+    }
 
     public AdminPanel() {
         this.setPadding(true);
         this.setSpacing(true);
         this.setAlignItems(Alignment.CENTER);
 
+        HorizontalLayout iconContainer = new HorizontalLayout();
+        iconContainer.setWidth("40px");
+        iconContainer.setHeight("40px");
+        iconContainer.getStyle().set("border", "1px solid #D1D5DB");
+        iconContainer.getStyle().set("border-radius", "30%");
+        iconContainer.setAlignItems(Alignment.CENTER);
+        iconContainer.setJustifyContentMode(JustifyContentMode.CENTER);
+
+        // 1. Posicionamiento absoluto para anclarlo a la esquina superior izquierda
+        iconContainer.getStyle().set("position", "absolute");
+        iconContainer.getStyle().set("top", "20px");
+        iconContainer.getStyle().set("left", "20px");
+        iconContainer.getStyle().set("cursor", "pointer");
+
+        Icon backButton = VaadinIcon.ANGLE_LEFT.create();
+        backButton.setColor("#000000");
+
+        // 2. ¡CRÍTICO! Agregar el ícono dentro del contenedor
+        iconContainer.add(backButton);
+
+        // 3. Navegar a la ruta raíz (Login)
+        iconContainer.addClickListener(e -> UI.getCurrent().navigate("login"));
+
+        add(iconContainer);
+
         H1 titulo = new H1("Panel de Control");
         titulo.setWidthFull();
         titulo.getStyle().set("text-align", "center");
+        titulo.getStyle().set("margin-top", "40px"); // <-- ESTA LÍNEA ES LA SOLUCIÓN
         titulo.getStyle().set("margin-bottom", "0");
 
         H2 subtitulo = new H2("Administrador");
         subtitulo.setWidthFull();
         subtitulo.getStyle().set("text-align", "center");
         subtitulo.getStyle().set("margin-top", "5px");
-
         // 🔘 BOTONES DE NAVEGACIÓN (Solo quedan los 3 solicitados)
         Button btn_dashboard = new Button("Dashboard");
         btn_dashboard.addThemeName("primary");
@@ -124,6 +166,11 @@ public class AdminPanel extends VerticalLayout {
 
         // invoca la base de datos
         int totalBD = 0;
+        try (Connection conn = Conexiones.getConnection()) {
+            totalBD = new Conexiones().contarUsuariosTotales(conn);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
 
         Span txtTotal = new Span(totalBD + " total");
         txtTotal.getStyle().set("background-color", "#e8f0fe");

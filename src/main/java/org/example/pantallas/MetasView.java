@@ -77,7 +77,6 @@ public class MetasView extends VerticalLayout implements BeforeEnterObserver {
         removeAll();
         setSizeUndefined();
         setWidthFull();
-        setWidth("390px");
         getStyle().set("background-color", "#F8F9FA");
         getStyle().set("margin", "0 auto");
         getStyle().set("padding-bottom", "60px");

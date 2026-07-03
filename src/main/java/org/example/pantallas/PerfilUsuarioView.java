@@ -66,7 +66,6 @@ public class PerfilUsuarioView extends VerticalLayout implements BeforeEnterObse
         removeAll();
         setSizeUndefined();
         setWidthFull();
-        setWidth("390px");
         getStyle().set("background-color", "#F8F9FA");
         getStyle().set("margin", "0 auto");
         getStyle().set("padding-bottom", "60px");
@@ -239,134 +238,42 @@ public class PerfilUsuarioView extends VerticalLayout implements BeforeEnterObse
             tituloActividad.getStyle().set("padding","15px");
             containerActividad.add(tituloActividad);
 
-            /*VerticalLayout containerMetas = new VerticalLayout();
-            containerMetas.setWidth("100%");
-            containerMetas.getStyle().set("background-color", "white");
-            containerMetas.getStyle().set("border-radius", "15px");
-            containerMetas.getStyle().set("cursor", "pointer");
-            containerMetas.addClickListener(e -> UI.getCurrent().navigate("metas"));
-
-            Icon iconMetas = VaadinIcon.BULLSEYE.create();
-            iconMetas.getStyle().set("color", "black");
-            iconMetas.getStyle().set("font-size", "24px");
-
-            H3 tituloMetas = new H3("METAS");
-            tituloMetas.getStyle().set("color", "black");
-            tituloMetas.getStyle().set("margin", "0");
-
-            HorizontalLayout contentMetas = new HorizontalLayout(iconMetas, tituloMetas);
-            contentMetas.setAlignItems(Alignment.CENTER);
-            contentMetas.setSpacing(true);
-            contentMetas.getStyle().set("margin", "auto");
-
-            containerMetas.add(contentMetas);
-            containerActividad.add(containerMetas);
-            container.add(containerActividad);
-
-            VerticalLayout containerDashboard = new VerticalLayout();
-            containerDashboard.setWidth("100%");
-            containerDashboard.getStyle().set("background-color", "white");
-            containerDashboard.getStyle().set("border-radius", "15px");
-            containerDashboard.getStyle().set("cursor", "pointer");
-            containerDashboard.addClickListener(e -> UI.getCurrent().navigate("dashboard"));
-
-            Icon iconDashboard = VaadinIcon.HOME_O.create();
-            iconDashboard.getStyle().set("color", "black");
-            iconDashboard.getStyle().set("font-size", "24px");
-
-            H3 titleDashboard = new H3("DASHBOARD");
-            titleDashboard.getStyle().set("color", "black");
-            titleDashboard.getStyle().set("margin", "0");
-
-            HorizontalLayout contentDashboard = new HorizontalLayout(iconDashboard, titleDashboard);
-            contentDashboard.setAlignItems(Alignment.CENTER);
-            contentDashboard.setSpacing(true);
-            contentDashboard.getStyle().set("margin", "auto");
-
-            containerDashboard.add(contentDashboard);
-            containerActividad.add(containerDashboard);
-            container.add(containerDashboard);
-
-            VerticalLayout containerExpenses = new VerticalLayout();
-            containerExpenses.setWidth("100%");
-            containerExpenses.getStyle().set("background-color", "white");
-            containerExpenses.getStyle().set("border-radius", "15px");
-            containerExpenses.getStyle().set("cursor", "pointer");
-            containerExpenses.addClickListener(e -> UI.getCurrent().navigate("gasto"));
-
-            Icon iconExpenses = VaadinIcon.WALLET.create();
-            iconExpenses.getStyle().set("color", "black");
-            iconExpenses.getStyle().set("font-size", "24px");
-
-            H3 titleExpense = new H3("GASTOS");
-            titleExpense.getStyle().set("color", "black");
-            titleExpense.getStyle().set("margin", "0");
-
-            HorizontalLayout contentExpenses = new HorizontalLayout(iconExpenses, titleExpense);
-            contentExpenses.setAlignItems(Alignment.CENTER);
-            contentExpenses.setSpacing(true);
-            contentExpenses.getStyle().set("margin", "auto");
-
-            containerExpenses.add(contentExpenses);
-            containerActividad.add(containerExpenses);
-            container.add(containerExpenses);
-
-            VerticalLayout containerIncome = new VerticalLayout();
-            containerIncome.setWidth("100%");
-            containerIncome.getStyle().set("background-color", "white");
-            containerIncome.getStyle().set("border-radius", "15px");
-            containerIncome.getStyle().set("cursor", "pointer");
-            containerIncome.addClickListener(e -> UI.getCurrent().navigate("ingreso"));
-
-            Icon iconIncome = VaadinIcon.MONEY.create();
-            iconIncome.getStyle().set("color", "black");
-            iconIncome.getStyle().set("font-size", "24px");
-
-            H3 titleIncome = new H3("INGRESOS");
-            titleIncome.getStyle().set("color", "black");
-            titleIncome.getStyle().set("margin", "0");
-
-            HorizontalLayout contentIncomes = new HorizontalLayout(iconIncome, titleIncome);
-            contentIncomes.setAlignItems(Alignment.CENTER);
-            contentIncomes.setSpacing(true);
-            contentIncomes.getStyle().set("margin", "auto");
-
-            containerIncome.add(contentIncomes);
-            containerActividad.add(containerIncome);
-            container.add(containerIncome);*/
-
-            Button logoutButton = new Button("Cerrar Sesión");
+            Button logoutButton = new Button("Cerrar Sesión", new Icon(VaadinIcon.SIGN_OUT));
             logoutButton.setWidthFull();
             logoutButton.getStyle().set("background-color", "#FFF0F0");
-            logoutButton.getStyle().set("color", "#DC3545"); // Texto rojo
+            logoutButton.getStyle().set("color", "#DC3545");
             logoutButton.getStyle().set("border", "1px solid #DC3545");
             logoutButton.getStyle().set("border-radius", "12px");
-            logoutButton.getStyle().set("margin-top", "30px"); // Separa el botón de las opciones de arriba
-            logoutButton.getStyle().set("margin-bottom", "80px");
+
             logoutButton.addClickListener(e -> {
                 VaadinSession.getCurrent().getSession().invalidate();
-                UI.getCurrent().navigate("");
+                UI.getCurrent().navigate("login");
             });
 
             Button btnEliminarCuenta = new Button("Eliminar Cuenta", new Icon(VaadinIcon.TRASH));
             btnEliminarCuenta.setWidthFull();
             btnEliminarCuenta.getStyle().set("background-color", "#FFF0F0");
-            btnEliminarCuenta.getStyle().set("color", "#DC3545"); // Rojo de alerta
+            btnEliminarCuenta.getStyle().set("color", "#DC3545");
             btnEliminarCuenta.getStyle().set("border", "1px solid #DC3545");
             btnEliminarCuenta.getStyle().set("border-radius", "12px");
-            btnEliminarCuenta.getStyle().set("margin-top", "30px");
-            btnEliminarCuenta.getStyle().set("margin-bottom", "80px"); // Respiro para la barra inferior
+
+            btnEliminarCuenta.addClickListener(e -> abrirDialogoConfirmacionEliminar());
+
+            VerticalLayout contenedorAccionesPeligrosas = new VerticalLayout(logoutButton, btnEliminarCuenta);
+            contenedorAccionesPeligrosas.setPadding(false);
+            contenedorAccionesPeligrosas.setSpacing(true); // Esto aplica el espacio estándar y elegante entre botones
+            contenedorAccionesPeligrosas.getStyle().set("margin-top", "30px"); // Distancia con los elementos de arriba
+            contenedorAccionesPeligrosas.getStyle().set("margin-bottom", "80px"); // Distancia para que no choque la barra de navegación
 
             // Al hacer clic, NO borramos de inmediato, abrimos la validación
             btnEliminarCuenta.addClickListener(e -> abrirDialogoConfirmacionEliminar());
             container.add(
                     containerActividad,
-                    crearBotonActividad("DASHBOARD", VaadinIcon.HOME_O, "metas"),
+                    crearBotonActividad("DASHBOARD", VaadinIcon.HOME_O, "dashboard"),
                     crearBotonActividad("GASTOS", VaadinIcon.WALLET, "gastos"),
                     crearBotonActividad("INGRESOS", VaadinIcon.MONEY, "ingresos"),
                     crearBotonActividad("METAS", VaadinIcon.BULLSEYE, "metas"),
-                    logoutButton,
-                    btnEliminarCuenta
+                    contenedorAccionesPeligrosas
             );
 
             this.add(container, navigationBar());

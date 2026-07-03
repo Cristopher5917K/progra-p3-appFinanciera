@@ -88,7 +88,7 @@ public class Register extends VerticalLayout{
             String cedula = txtfid.getValue();
             String nombre = txtfname.getValue();
             String apellido = txtflastname.getValue();
-            String correo = txtfmail.getValue();
+            String correo = txtfmail.getValue().toLowerCase();
             String contrasena = txtfpassword.getValue();
 
             if (cedula.isEmpty() || nombre.isEmpty() || apellido.isEmpty() || correo.isEmpty() || contrasena.isEmpty()){
@@ -101,12 +101,12 @@ public class Register extends VerticalLayout{
                 return;
             }
 
-            if (!nombre.matches("[a-zA-ZáéíóúÁÉÍÓÚñÑ\\\\s]+")){
+            if (!nombre.matches("[a-zA-ZáéíóúÁÉÍÓÚñÑ\\s]+")){
                 mostrarAdvertencia("NOMBRE NO PUEDE CONTENER NUMEROS");
                 return;
             }
 
-            if (!apellido.matches("[a-zA-ZáéíóúÁÉÍÓÚñÑ\\\\s]+")){
+            if (!apellido.matches("[a-zA-ZáéíóúÁÉÍÓÚñÑ\\s]+")){
                 mostrarAdvertencia("APELLIDO NO PUEDE CONTENER NUMEROS");
                 return;
             }
@@ -123,14 +123,14 @@ public class Register extends VerticalLayout{
 
             try {
                 conn = database.getConnection();
-                if (database.noRepetir(cedula, conn)){
+                if (!database.noRepetir(cedula, conn)){
                     mostrarAdvertencia("CEDULA YA INGRESADA");
                     return;
                 }
                 database.registerUser(conn, nombre, apellido, correo, contrasena,0.0 , cedula);
                 database.registerClient(conn, nombre, apellido, cedula, 0.0, contrasena);
                 Notification.show("¡Registro exitoso!", 3000, Notification.Position.TOP_CENTER);
-                getUI().ifPresent(ui -> ui.navigate(""));
+                getUI().ifPresent(ui -> ui.navigate("login"));
             } catch (SQLException e){
                 e.printStackTrace();
                 Notification.show("Error al registrar el usuario.", 3000, Notification.Position.TOP_CENTER);

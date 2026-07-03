@@ -249,6 +249,22 @@ public class Conexiones {
         return 0.0;
     }
 
+    public double sumarMetas(int clienteId, Connection conn) {
+        String sql = "SELECT SUM(target_amount) AS total_metas FROM metas WHERE id_cliente = ?";
+
+        try (PreparedStatement data = conn.prepareStatement(sql)) {
+            data.setInt(1, clienteId);
+            ResultSet rs = data.executeQuery();
+
+            if (rs.next()) {
+                return rs.getDouble("total_metas");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0.0;
+    }
+
     public double sumarIngresosDelMes(int clienteId, Connection conn) {
         String sql = "SELECT SUM(monto) AS total_ingresos FROM movimiento WHERE cliente = ? AND tipo_movimiento = 'INGRESO'";
 
@@ -546,7 +562,7 @@ public class Conexiones {
 
     public boolean noRepetir(String cedula, Connection conn){
         boolean allow = true;
-        String sql= "SELECT 1 FROM usuario WHERE cedula = ?";
+        String sql= "SELECT 1 FROM usuarios WHERE cedula = ?";
 
         try{
             PreparedStatement cedulaInfo = conn.prepareStatement(sql);
@@ -562,6 +578,22 @@ public class Conexiones {
             return false;
         }
         return allow;
+    }
+
+    public int contarUsuariosTotales(Connection conn) {
+        String sql = "SELECT COUNT(*) FROM usuarios";
+
+        try (PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            if (rs.next()) {
+                return rs.getInt(1); // Retorna el número total
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0; // Si hay un error, retorna 0
     }
 }
 

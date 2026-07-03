@@ -60,7 +60,6 @@ public class VentanaGastos extends VerticalLayout implements BeforeEnterObserver
         setAlignItems(Alignment.CENTER);
         setSizeUndefined();
         setWidthFull();
-        setWidth("390px");
         getStyle().set("background-color", "#F8F9FA");
         getStyle().set("margin", "0 auto");
         getStyle().set("padding-bottom", "60px");

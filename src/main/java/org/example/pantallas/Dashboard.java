@@ -1,5 +1,6 @@
 package org.example.pantallas;
 
+import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
@@ -21,6 +22,8 @@ import org.example.backend.Conexiones;
 import org.example.backend.DataStructures;
 import org.example.info.Cliente;
 import org.example.info.Movimientos;
+import org.example.info.Reporte;
+import org.example.info.Meta;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -28,6 +31,9 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.TreeSet;
+
 
 @Route("dashboard")
 public class Dashboard extends VerticalLayout implements BeforeEnterObserver {
@@ -59,7 +65,6 @@ public class Dashboard extends VerticalLayout implements BeforeEnterObserver {
         removeAll();
         setSizeUndefined();
         setWidthFull();
-        setWidth("390px");
         getStyle().set("background-color", "#F8F9FA");
         getStyle().set("margin", "0 auto");
         getStyle().set("padding-bottom", "60px");
@@ -68,6 +73,7 @@ public class Dashboard extends VerticalLayout implements BeforeEnterObserver {
 
         if (user.getInitialSalary() <= 0){
             actualizarSueldo(user);
+            return;
         }
 
         VerticalLayout mainContainer = new VerticalLayout();
@@ -77,6 +83,7 @@ public class Dashboard extends VerticalLayout implements BeforeEnterObserver {
         // Fetch movements and totals for the user
         List<Movimientos> movements = new ArrayList<>();
         double totalGastos = 0.0;
+        double totalMetas = 0.0;
         try (Connection conn = Conexiones.getConnection()) {
             Conexiones database = new Conexiones();
             List<Movimientos> ingresos = database.movements("INGRESO", user.getIdCliente(), conn);
@@ -84,13 +91,18 @@ public class Dashboard extends VerticalLayout implements BeforeEnterObserver {
             if (ingresos != null) movements.addAll(ingresos);
             if (gastos != null) movements.addAll(gastos);
             totalGastos = database.sumarGastosDelMes(user.getIdCliente(), conn);
+            totalMetas = database.sumarMetas(user.getIdCliente(), conn);
+            if (totalMetas <= 0){
+                actualizarMeta(user);
+                return;
+            }
         } catch (SQLException e) {
             e.printStackTrace();
         }
 
         mainContainer.add(
                 generateScroll(user, movements),
-                generatePercentage(user.getInitialSalary(), 1800),
+                generatePercentage(user.getInitialSalary(), totalMetas),
                 recommendationsCards(user.getInitialSalary(), totalGastos),
                 crearTarjetasMovimientos()
         );
@@ -148,39 +160,188 @@ public class Dashboard extends VerticalLayout implements BeforeEnterObserver {
     }
 
     // Open a simple dialog listing movements (both ingresos y gastos)
-    private void abrirVentanaReporte(Cliente user, List<Movimientos> movements) {
-        Dialog ventana = new Dialog();
-        ventana.setHeaderTitle("Movimientos de " + user.getNameCliente());
+    private void graphicMovements(Cliente user, List<Movimientos> movimientosList){
+        Dialog graphic = new Dialog();
+        graphic.setHeaderTitle("GRAFICO DE AHORRO");
+        graphic.setWidth("350px");
 
-        VerticalLayout lista = new VerticalLayout();
-        if (movements == null || movements.isEmpty()) {
-            lista.add(new Span("No hay movimientos registrados."));
+        DataStructures data = new DataStructures();
+
+        Map<String, Double> grafico = data.calculateDistribution(user, movimientosList);
+        TreeSet<Movimientos> filter = data.ordenarMovimientos(movimientosList);
+
+        double ahorro = grafico.get("Ahorros Disponibles");
+        double gastos = grafico.get("Gastos");
+        double total = ahorro + gastos;
+
+        System.out.println(ahorro);
+        System.out.println(gastos);
+
+        int percentage;
+
+        if (total > 0){
+            percentage = (int) Math.round((gastos / total) * 100);
         } else {
-            for (Movimientos m : movements) {
-                HorizontalLayout row = new HorizontalLayout();
-                row.setWidthFull();
-                Span desc = new Span(m.getCategoria() + " (" + m.getTipoMovimiento() + ")");
-                Span val = new Span((m.getTipoMovimiento().equalsIgnoreCase("INGRESO") ? "+" : "-") + String.format("$%,.2f", m.getMonto()));
-                val.getStyle().set("font-weight", "bold");
-                row.add(desc, val);
-                lista.add(row);
+            percentage = 0;
+        }
+
+        VerticalLayout containerGraphic = new VerticalLayout();
+        containerGraphic.setAlignItems(Alignment.CENTER);
+        containerGraphic.setPadding(false);
+
+        Span donut = new Span();
+        donut.setWidth("150px");
+        donut.setHeight("150px");
+        donut.getStyle().set("border-radius", "50%");
+        // La magia visual: un gradiente cónico que crea la dona
+        donut.getStyle().set("background", "conic-gradient(#ED2100 " + percentage + "%, #28a745 " + percentage + "% 100%)");
+        // El agujero del centro
+        donut.getStyle().set("mask-image", "radial-gradient(circle, transparent 55%, black 56%)");
+        donut.getStyle().set("-webkit-mask-image", "radial-gradient(circle, transparent 55%, black 56%)");
+
+        HorizontalLayout leyendas = new HorizontalLayout();
+        leyendas.setWidthFull();
+        leyendas.setJustifyContentMode(JustifyContentMode.CENTER);
+
+        Span leyendaAhorro = new Span("Ahorro: $" + String.format("%.0f", ahorro));
+        leyendaAhorro.getStyle().set("color", "#28a745").set("font-size", "0.8rem").set("font-weight", "bold");
+
+        Span leyendaGastos = new Span("Gastos: $" + String.format("%.0f", gastos));
+        leyendaGastos.getStyle().set("color", "#ED2100").set("font-size", "0.8rem").set("font-weight", "bold");
+
+        leyendas.add(leyendaAhorro, leyendaGastos);
+        containerGraphic.add(donut, leyendas);
+
+        // 3. LA LISTA DE MOVIMIENTOS (De tu TreeSet)
+        VerticalLayout listaMovimientos = new VerticalLayout();
+        listaMovimientos.setPadding(false);
+        listaMovimientos.getStyle().set("margin-top", "15px");
+
+        Span tituloHistorial = new Span("Historial Reciente");
+        tituloHistorial.getStyle().set("font-weight", "bold").set("font-size", "0.9rem");
+        listaMovimientos.add(tituloHistorial);
+
+        if (filter.isEmpty()) {
+            listaMovimientos.add(new Span("No hay movimientos registrados."));
+        } else {
+            for (Movimientos mov : filter) {
+                HorizontalLayout fila = new HorizontalLayout();
+                fila.setWidthFull();
+                fila.setJustifyContentMode(JustifyContentMode.BETWEEN);
+
+                boolean esIngreso = "INGRESO".equalsIgnoreCase(mov.getTipoMovimiento());
+
+                Span desc = new Span(mov.getCategoria() + " (" + mov.getFecha().toString() + ")");
+                desc.getStyle().set("font-size", "0.8rem");
+
+                Span valor = new Span((esIngreso ? "+$" : "-$") + mov.getMonto());
+                valor.getStyle().set("color", esIngreso ? "#28a745" : "#dc3545");
+                valor.getStyle().set("font-weight", "bold");
+
+                fila.add(desc, valor);
+                listaMovimientos.add(fila);
             }
         }
 
-        ventana.add(lista);
-        Button close = new Button("Cerrar", e -> ventana.close());
-        ventana.getFooter().add(close);
-        ventana.open();
+        Scroller scroller = new Scroller(listaMovimientos);
+        scroller.setMaxHeight("200px");
+        scroller.setWidthFull();
+
+        graphic.add(containerGraphic, scroller);
+        graphic.getFooter().add(new Button("Cerrar", e -> graphic.close()));
+
+        graphic.open();
+
     }
 
-    private void graphicMovements(Cliente user, List<Movimientos> movements) {
-        Dialog ventana = new Dialog();
-        ventana.setHeaderTitle("Gráfico de movimientos (simulado)");
-        ventana.add(new Span("Aquí iría el gráfico. Movimientos totales: " + (movements == null ? 0 : movements.size())));
-        Button close = new Button("Cerrar", e -> ventana.close());
-        ventana.getFooter().add(close);
-        ventana.open();
+    private void abrirVentanaReporte(Cliente user, List<Movimientos> movimientosList) {
+        DataStructures dataStructures = new DataStructures();
+        Reporte datos = dataStructures.savingsUser(user, movimientosList);
+        Dialog dialog = new Dialog();
+        dialog.setHeaderTitle("Resumen Financiero");
+        dialog.setWidth("350px");
+
+        VerticalLayout layout = new VerticalLayout();
+        layout.setPadding(false);
+
+        // Totales
+        Span lblSueldo = new Span("Sueldo Inicial: $" + String.format("%.2f", datos.getSueldoInicial()));
+
+        Span lblIngresos = new Span("Otros Ingresos: +$" + String.format("%.2f", datos.getTotalIngresos()));
+        lblIngresos.getStyle().set("color", "#28a745");
+
+        Span lblGastos = new Span("Gastos Totales: -$" + String.format("%.2f", datos.getTotalGastos()));
+        lblGastos.getStyle().set("color", "#ED2100");
+
+        Span lblTotal = new Span("DISPONIBLE: $" + String.format("%.2f", datos.getAhorroDisponible()));
+        lblTotal.getStyle().set("font-weight", "bold").set("font-size", "1.2rem").set("margin-top", "10px");
+
+        layout.add(lblSueldo, lblIngresos, lblGastos, lblTotal);
+
+        // Iteramos los arreglos paralelos para generar el desglose visual
+        if (datos.categorias.length > 0) {
+            H4 subtitulo = new H4("Desglose de Gastos (A-Z)");
+            subtitulo.getStyle().set("color", "#64748B");
+            layout.add(subtitulo);
+
+            for (int i = 0; i < datos.categorias.length; i++) {
+                HorizontalLayout fila = new HorizontalLayout();
+                fila.setWidthFull();
+                fila.setJustifyContentMode(JustifyContentMode.BETWEEN);
+
+                Span nombre = new Span(datos.categorias[i]);
+                Span monto = new Span("$" + String.format("%.2f", datos.montos[i]));
+                monto.getStyle().set("font-weight", "bold");
+
+                fila.add(nombre, monto);
+                layout.add(fila);
+            }
+        }
+
+        dialog.add(layout);
+
+        // --- NUEVO BOTÓN PARA ACTUALIZAR EL SUELDO ---
+        Button btnActualizar = new Button("Convertir en Sueldo", event -> {
+            double nuevoSueldo = datos.getAhorroDisponible();
+
+            Conexiones db = new Conexiones();
+            try (java.sql.Connection conn = db.getConnection()) {
+
+                // 1. Actualizar en MySQL usando los métodos que ya tienes
+                db.updateSalary(user.getIdCliente(), nuevoSueldo, conn);
+                db.updateSalaryUSer(user.getIdCliente(), nuevoSueldo, conn);
+
+                // 2. Actualizar la mochila (sesión actual)
+                user.setInitialSalary(nuevoSueldo);
+
+                com.vaadin.flow.component.notification.Notification.show(
+                        "¡Sueldo actualizado a $" + String.format("%.2f", nuevoSueldo) + "!",
+                        300,
+                        com.vaadin.flow.component.notification.Notification.Position.TOP_CENTER
+                );
+
+                dialog.close();
+
+                // 3. Recargar la página para que la tarjeta de capacidad de ahorro y los gráficos se re-dibujen
+                com.vaadin.flow.component.UI.getCurrent().getPage().reload();
+
+            } catch (java.sql.SQLException ex) {
+                ex.printStackTrace();
+                com.vaadin.flow.component.notification.Notification.show("Error de base de datos.");
+            }
+        });
+
+        // Estilo del botón (Verde para indicar acción positiva)
+        btnActualizar.getStyle().set("background-color", "#28a745");
+        btnActualizar.getStyle().set("color", "white");
+
+        Button btnCerrar = new Button("Cerrar", e -> dialog.close());
+
+        // Añadimos ambos botones al pie de la ventana
+        dialog.getFooter().add(btnCerrar, btnActualizar);
+        dialog.open();
     }
+
     private VerticalLayout cardTemplate(){
         VerticalLayout template = new VerticalLayout();
         template.setWidthFull();
@@ -545,13 +706,17 @@ public class Dashboard extends VerticalLayout implements BeforeEnterObserver {
 
 
                 user.setInitialSalary(sueldoField.getValue());
-
-                UI.getCurrent().getPage().reload();
-
                 ventanaSueldo.close();
+
             } else {
                 sueldoField.setErrorMessage("Ingresa un valor válido");
                 sueldoField.setInvalid(true);
+            }
+        });
+
+        ventanaSueldo.addOpenedChangeListener(e -> {
+            if (!e.isOpened()) { // Si el estado cambió a "Cerrado"
+                createUI();
             }
         });
 
@@ -562,6 +727,72 @@ public class Dashboard extends VerticalLayout implements BeforeEnterObserver {
         layout.add(mensaje, sueldoField, btnGuardar);
         ventanaSueldo.add(layout);
         ventanaSueldo.open();
+    }
+
+    private void actualizarMeta(Cliente user) {
+        Dialog ventanaMeta = new Dialog(); // Cambié el nombre de la variable para que tenga sentido
+        ventanaMeta.setHeaderTitle("¡Bienvenido! Configura tu primera meta");
+        ventanaMeta.setCloseOnEsc(false);
+        ventanaMeta.setCloseOnOutsideClick(false);
+
+        VerticalLayout layout = new VerticalLayout();
+        Span mensaje = new Span("Para darte mejores recomendaciones, ingresa tu meta financiera a alcanzar:");
+        mensaje.getStyle().set("font-size", "0.9rem");
+
+        NumberField metaField = new NumberField("Monto de la Meta");
+        metaField.setPlaceholder("0.00");
+        metaField.setWidthFull();
+
+        Button btnGuardar = new Button("Guardar y Empezar", event -> {
+            // 1. Validar usando metaField (ya no sueldoField)
+            if (metaField.getValue() != null && metaField.getValue() > 0) {
+
+                Conexiones db = new Conexiones();
+                try (Connection conn = db.getConnection()) {
+
+                    // 2. Crear una meta por defecto con el monto ingresado
+                    Meta nuevaMeta = new Meta(
+                            0, // ID autoincremental
+                            "Mi Primera Meta", // Nombre por defecto
+                            metaField.getValue(), // El monto objetivo que puso el usuario
+                            0.0, // Monto ahorrado inicial (0)
+                            LocalDate.now().plusYears(1), // Le damos 1 año de plazo por defecto
+                            "#3B82F6", // Color azul
+                            "General", // Categoría
+                            LocalDate.now() // Fecha de creación
+                    );
+
+                    // 3. Guardar la meta en la base de datos usando el método que ya tienes
+                    db.addMeta(nuevaMeta, user.getIdCliente(), conn);
+                    ventanaMeta.close();
+
+                } catch (SQLException e){
+                    e.printStackTrace();
+                }
+
+                UI.getCurrent().getPage().reload();
+                ventanaMeta.close();
+
+            } else {
+                // 4. Mostrar error en el campo correcto
+                metaField.setErrorMessage("Ingresa un valor válido");
+                metaField.setInvalid(true);
+            }
+        });
+
+        ventanaMeta.addOpenedChangeListener(e -> {
+            if (!e.isOpened()) { // Si el estado cambió a "Cerrado"
+                createUI();
+            }
+        });
+
+        btnGuardar.getStyle().set("background-color", "#28a745");
+        btnGuardar.getStyle().set("color", "white");
+        btnGuardar.setWidthFull();
+
+        layout.add(mensaje, metaField, btnGuardar);
+        ventanaMeta.add(layout);
+        ventanaMeta.open();
     }
 
 }

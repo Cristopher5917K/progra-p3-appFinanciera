@@ -62,7 +62,6 @@ public class VentanaNuevoIngreso extends VerticalLayout implements BeforeEnterOb
         removeAll();
         setSizeUndefined();
         setWidthFull();
-        setWidth("390px");
         getStyle().set("margin", "0 auto");
         getStyle().set("padding-bottom", "68px");
         setSpacing(false);
