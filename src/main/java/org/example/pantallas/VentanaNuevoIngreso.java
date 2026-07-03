@@ -6,6 +6,8 @@ import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -275,6 +277,9 @@ public class VentanaNuevoIngreso extends VerticalLayout implements BeforeEnterOb
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
+            } else {
+                Notification.show("POR FAVOR, INGRESE UN MONTO VALIDO", 3000, Notification.Position.TOP_CENTER)
+                        .addThemeVariants(NotificationVariant.LUMO_WARNING);
             }
 
         });

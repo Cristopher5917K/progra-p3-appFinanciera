@@ -7,6 +7,7 @@ import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.H4;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Route;
@@ -17,6 +18,11 @@ import java.sql.SQLException;
 
 @Route("register")
 public class Register extends VerticalLayout{
+    public void mostrarAdvertencia(String message){
+        Notification.show(message, 3000, Notification.Position.TOP_CENTER)
+                .addThemeVariants(NotificationVariant.LUMO_WARNING);
+    }
+
     public Register(){
         this.setSpacing(true);
         this.setSizeFull();
@@ -85,8 +91,42 @@ public class Register extends VerticalLayout{
             String correo = txtfmail.getValue();
             String contrasena = txtfpassword.getValue();
 
+            if (cedula.isEmpty() || nombre.isEmpty() || apellido.isEmpty() || correo.isEmpty() || contrasena.isEmpty()){
+                mostrarAdvertencia("LLENE TODOS LOS CAMPOS");
+                return;
+            }
+
+            if (!cedula.matches("\\d{10}")){
+                mostrarAdvertencia("CEDULA NO VALIDA, DEBE CONTENER 10 DIGITOS");
+                return;
+            }
+
+            if (!nombre.matches("[a-zA-ZáéíóúÁÉÍÓÚñÑ\\\\s]+")){
+                mostrarAdvertencia("NOMBRE NO PUEDE CONTENER NUMEROS");
+                return;
+            }
+
+            if (!apellido.matches("[a-zA-ZáéíóúÁÉÍÓÚñÑ\\\\s]+")){
+                mostrarAdvertencia("APELLIDO NO PUEDE CONTENER NUMEROS");
+                return;
+            }
+
+            if (!correo.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[a-zA-Z]{2,6}$")){
+                mostrarAdvertencia("EL FORMATO DE CORREO NO ES VALIDO");
+                return;
+            }
+
+            if (contrasena.length() < 8){
+                mostrarAdvertencia("LA CONTRASEÑA DEBE SER DE MINIMO 8 CARACTERES");
+                return;
+            }
+
             try {
                 conn = database.getConnection();
+                if (database.noRepetir(cedula, conn)){
+                    mostrarAdvertencia("CEDULA YA INGRESADA");
+                    return;
+                }
                 database.registerUser(conn, nombre, apellido, correo, contrasena,0.0 , cedula);
                 database.registerClient(conn, nombre, apellido, cedula, 0.0, contrasena);
                 Notification.show("¡Registro exitoso!", 3000, Notification.Position.TOP_CENTER);

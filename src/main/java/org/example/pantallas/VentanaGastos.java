@@ -130,7 +130,7 @@ public class VentanaGastos extends VerticalLayout implements BeforeEnterObserver
                             .addThemeVariants(NotificationVariant.LUMO_ERROR);
                 }
             } else {
-                Notification.show("Por favor, completa el monto, la categoría y la fecha.", 3000, Notification.Position.MIDDLE)
+                Notification.show("Por favor, completa el monto, la categoría y la fecha.", 3000, Notification.Position.TOP_CENTER)
                         .addThemeVariants(NotificationVariant.LUMO_WARNING);
             }
         });

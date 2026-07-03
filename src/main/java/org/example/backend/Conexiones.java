@@ -5,6 +5,7 @@ import io.github.cdimascio.dotenv.Dotenv;
 import org.example.info.Cliente;
 import org.example.info.Meta;
 import org.example.info.Movimientos;
+import org.hibernate.validator.cfg.defs.EANDef;
 
 import javax.swing.*;
 import java.sql.*;
@@ -497,6 +498,70 @@ public class Conexiones {
             e.printStackTrace();
             return false;
         }
+    }
+
+    public String correoUser(int id, Connection conn){
+        String correoUser = "SELECT correo FROM usuarios WHERE id = ?";
+        try{
+            PreparedStatement data = conn.prepareStatement(correoUser);
+            data.setInt(1, id);
+
+            ResultSet search = data.executeQuery();
+            if (search.next()){
+                return search.getString("correo");
+            }
+
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public boolean eliminarUsuarioCompleto(int id, Connection connection){
+        String delete = "DELETE FROM usuarios WHERE id = ?";
+        String deleteCliente = "DELETE FROM cliente WHERE id_cliente = ?";
+
+        try {
+            PreparedStatement deleteInfo = connection.prepareStatement(delete);
+            deleteInfo.setInt(1, id);
+
+            int value = deleteInfo.executeUpdate();
+            if (value > 0){
+                PreparedStatement deleteAll = connection.prepareStatement(deleteCliente);
+                deleteAll.setInt(1, id);
+                int update = deleteAll.executeUpdate();
+                if (update > 0){
+                    System.out.println("SE ELIMINO EXITOSAMENTE");
+                    return true;
+                }
+
+            } else {
+                System.out.println("ERROR AL ELIMINAR");
+            }
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean noRepetir(String cedula, Connection conn){
+        boolean allow = true;
+        String sql= "SELECT 1 FROM usuario WHERE cedula = ?";
+
+        try{
+            PreparedStatement cedulaInfo = conn.prepareStatement(sql);
+            cedulaInfo.setString(1, cedula);
+
+            ResultSet rs = cedulaInfo.executeQuery();
+            if (rs.next()) {
+                allow = false;
+
+            }
+        } catch (SQLException e){
+            e.printStackTrace();
+            return false;
+        }
+        return allow;
     }
 }
 

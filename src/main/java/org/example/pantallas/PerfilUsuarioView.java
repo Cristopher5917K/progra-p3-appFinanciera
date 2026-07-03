@@ -19,6 +19,7 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.server.VaadinSession;
 
 import java.sql.Connection;
@@ -101,6 +102,7 @@ public class PerfilUsuarioView extends VerticalLayout implements BeforeEnterObse
         userCard.getStyle().set("flex-wrap", "wrap");
         userCard.setAlignItems(Alignment.CENTER);
 
+        Conexiones database = new Conexiones();
         String nombre="";
         String apellido="";
         String cedula="";
@@ -120,7 +122,7 @@ public class PerfilUsuarioView extends VerticalLayout implements BeforeEnterObse
             nombre = cliente.getNameCliente();
             apellido = cliente.getApellidoCliente();
             cedula = cliente.getCedula();
-            correo = ""; // correo lives in 'usuarios' table; optional to fetch it later
+            correo = database.correoUser(cliente.getIdCliente(), con); // correo lives in 'usuarios' table; optional to fetch it later
             sueldo = cliente.getInitialSalary();
         
 
@@ -237,7 +239,7 @@ public class PerfilUsuarioView extends VerticalLayout implements BeforeEnterObse
             tituloActividad.getStyle().set("padding","15px");
             containerActividad.add(tituloActividad);
 
-            VerticalLayout containerMetas = new VerticalLayout();
+            /*VerticalLayout containerMetas = new VerticalLayout();
             containerMetas.setWidth("100%");
             containerMetas.getStyle().set("background-color", "white");
             containerMetas.getStyle().set("border-radius", "15px");
@@ -331,14 +333,41 @@ public class PerfilUsuarioView extends VerticalLayout implements BeforeEnterObse
 
             containerIncome.add(contentIncomes);
             containerActividad.add(containerIncome);
-            container.add(containerIncome);
+            container.add(containerIncome);*/
 
             Button logoutButton = new Button("Cerrar Sesión");
+            logoutButton.setWidthFull();
+            logoutButton.getStyle().set("background-color", "#FFF0F0");
+            logoutButton.getStyle().set("color", "#DC3545"); // Texto rojo
+            logoutButton.getStyle().set("border", "1px solid #DC3545");
+            logoutButton.getStyle().set("border-radius", "12px");
+            logoutButton.getStyle().set("margin-top", "30px"); // Separa el botón de las opciones de arriba
+            logoutButton.getStyle().set("margin-bottom", "80px");
             logoutButton.addClickListener(e -> {
                 VaadinSession.getCurrent().getSession().invalidate();
                 UI.getCurrent().navigate("");
             });
-            container.add(logoutButton);
+
+            Button btnEliminarCuenta = new Button("Eliminar Cuenta", new Icon(VaadinIcon.TRASH));
+            btnEliminarCuenta.setWidthFull();
+            btnEliminarCuenta.getStyle().set("background-color", "#FFF0F0");
+            btnEliminarCuenta.getStyle().set("color", "#DC3545"); // Rojo de alerta
+            btnEliminarCuenta.getStyle().set("border", "1px solid #DC3545");
+            btnEliminarCuenta.getStyle().set("border-radius", "12px");
+            btnEliminarCuenta.getStyle().set("margin-top", "30px");
+            btnEliminarCuenta.getStyle().set("margin-bottom", "80px"); // Respiro para la barra inferior
+
+            // Al hacer clic, NO borramos de inmediato, abrimos la validación
+            btnEliminarCuenta.addClickListener(e -> abrirDialogoConfirmacionEliminar());
+            container.add(
+                    containerActividad,
+                    crearBotonActividad("DASHBOARD", VaadinIcon.HOME_O, "metas"),
+                    crearBotonActividad("GASTOS", VaadinIcon.WALLET, "gastos"),
+                    crearBotonActividad("INGRESOS", VaadinIcon.MONEY, "ingresos"),
+                    crearBotonActividad("METAS", VaadinIcon.BULLSEYE, "metas"),
+                    logoutButton,
+                    btnEliminarCuenta
+            );
 
             this.add(container, navigationBar());
 
@@ -406,20 +435,40 @@ public class PerfilUsuarioView extends VerticalLayout implements BeforeEnterObse
     }
 
     private void guardarCambios() {
+        if (txtNombre.isEmpty() || txtApellido.isEmpty() || txtCedula.isEmpty() || txtSueldo.isEmpty()) {
+            Notification.show("Por favor, no dejes campos en blanco.", 3000, Notification.Position.MIDDLE);
+            return;
+        }
+
+        double sueldo = 0.0;
+        try {
+            sueldo = Double.parseDouble(txtSueldo.getValue());
+        } catch (NumberFormatException e) {
+            Notification.show("El sueldo debe ser un número válido.", 3000, Notification.Position.MIDDLE);
+            return;
+        }
+
         String nombre = txtNombre.getValue();
         String apellido = txtApellido.getValue();
         String cedula = txtCedula.getValue();
-        double sueldo = Double.parseDouble(txtSueldo.getValue());
 
         Conexiones db = new Conexiones();
         boolean actualizado = db.updateUserProfile(idUsuario, nombre, apellido, cedula, sueldo, con);
 
         if (actualizado) {
+            // Actualizar la sesión para que el Dashboard vea los datos nuevos
+            Cliente userSession = VaadinSession.getCurrent().getAttribute(Cliente.class);
+            if (userSession != null) {
+                userSession.setNameCliente(nombre);
+                userSession.setApellidoCliente(apellido);
+                userSession.setInitialSalary(sueldo);
+            }
+
             Notification.show("Perfil actualizado con éxito", 3000, Notification.Position.TOP_CENTER);
-            lblNombreCompleto.setText(nombre + " " + apellido);
-            lblCedula.setText("Cedula: " + cedula);
-            lblSueldo.setText("Sueldo: $" + sueldo);
             toggleModoEdicion(false);
+
+            // Recargar para que el Avatar genere las iniciales correctas
+            UI.getCurrent().getPage().reload();
         } else {
             Notification.show("Error al actualizar el perfil", 3000, Notification.Position.TOP_CENTER);
         }
@@ -463,5 +512,56 @@ public class PerfilUsuarioView extends VerticalLayout implements BeforeEnterObse
 
         icons.add(home, expenses, incomes, goals, user);
         return icons;
+    }
+
+    private void abrirDialogoConfirmacionEliminar() {
+        Dialog dialog = new Dialog();
+        dialog.setHeaderTitle("Eliminar Cuenta Definitivamente");
+        dialog.setWidth("350px");
+
+        VerticalLayout layout = new VerticalLayout();
+        layout.setPadding(false);
+
+        Span textoAdvertencia = new Span("¿Estás completamente seguro? Esta acción eliminará tu perfil, historial de movimientos y metas. Esta acción NO se puede deshacer.");
+        textoAdvertencia.getStyle().set("color", "#64748B");
+        textoAdvertencia.getStyle().set("font-size", "0.9rem");
+        textoAdvertencia.getStyle().set("text-align", "justify");
+
+        layout.add(textoAdvertencia);
+        dialog.add(layout);
+
+        // Botón seguro (Cancelar)
+        Button btnCancelar = new Button("Cancelar", e -> dialog.close());
+
+        // Botón destructivo (Eliminar)
+        Button btnConfirmarEliminar = new Button("Sí, eliminar mi cuenta", e -> {
+
+            Conexiones db = new Conexiones();
+            // Aseguramos el try-with-resources para no dejar conexiones fantasma
+            try (Connection conn = db.getConnection()) {
+
+                boolean eliminado = db.eliminarUsuarioCompleto(idUsuario, conn);
+
+                if (eliminado) {
+                    VaadinSession.getCurrent().getSession().invalidate();
+                    dialog.close();
+                    UI.getCurrent().navigate("");
+                } else {
+                    Notification.show("Hubo un problema al intentar eliminar tu cuenta.", 3000, Notification.Position.TOP_CENTER);
+                }
+
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                Notification.show("Error de servidor al intentar eliminar.", 3000, Notification.Position.TOP_CENTER);
+            }
+        });
+
+        btnConfirmarEliminar.getStyle().set("background-color", "#DC3545");
+        btnConfirmarEliminar.getStyle().set("color", "white");
+
+        // Añadimos los botones al footer del popup
+        dialog.getFooter().add(btnCancelar, btnConfirmarEliminar);
+
+        dialog.open();
     }
 }
